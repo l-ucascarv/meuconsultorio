@@ -90,24 +90,42 @@ const PsicoDocApp: React.FC = () => {
     
     setIsGenerating(true);
     
-    // Simulate AI generation (replace with actual API call)
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockGenerated: GeneratedReport = {
-        title: `${reportData.type.toUpperCase()} PSICOLÓGICO`,
-        identification: `Paciente: ${reportData.patientName}\nSolicitante: ${reportData.solicitor}\nFinalidade: ${reportData.purpose}\n\nProfissional Responsável: ${psychoInfo.name}\nCRP: ${psychoInfo.crp}\nEspecialidade: ${psychoInfo.specialty}`,
-        demand: reportData.demandDescription ? `A demanda apresentada refere-se a: ${reportData.demandDescription}` : undefined,
-        procedure: reportData.procedures ? `Foram realizados os seguintes procedimentos: ${reportData.procedures}` : undefined,
-        analysis: reportData.analysis ? `Com base nos procedimentos realizados, observa-se que: ${reportData.analysis}` : undefined,
-        conclusion: reportData.conclusion || 'Conclusão a ser definida pelo profissional responsável.',
-      };
-      
-      setGeneratedDoc(mockGenerated);
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-document`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          type: reportData.type,
+          patientName: reportData.patientName,
+          solicitor: reportData.solicitor,
+          purpose: reportData.purpose,
+          demandDescription: reportData.demandDescription,
+          procedures: reportData.procedures,
+          analysis: reportData.analysis,
+          conclusion: reportData.conclusion,
+          specificQuestion: reportData.specificQuestion,
+          periodStart: reportData.periodStart,
+          periodEnd: reportData.periodEnd,
+          psychologistName: psychoInfo.name,
+          psychologistCrp: psychoInfo.crp,
+          psychologistSpecialty: psychoInfo.specialty,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao gerar documento');
+      }
+
+      const generatedDoc: GeneratedReport = await response.json();
+      setGeneratedDoc(generatedDoc);
       setView('preview');
     } catch (error) {
       console.error('Erro na geração:', error);
-      alert('Erro ao gerar documento. Tente novamente.');
+      alert(error instanceof Error ? error.message : 'Erro ao gerar documento. Tente novamente.');
     } finally {
       setIsGenerating(false);
     }
