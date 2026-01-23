@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   AppView, 
   ReportData, 
@@ -21,16 +21,15 @@ import {
   ProfileView,
   LoadingOverlay 
 } from '../components/psicodoc';
-
-// Storage keys
-const STORAGE_KEYS = {
-  PSYCHO_INFO: 'psicodoc_psycho_info',
-  PATIENTS: 'psicodoc_patients',
-  REPORTS: 'psicodoc_reports',
-  APPOINTMENTS: 'psicodoc_appointments',
-};
+import { useAuth } from '@/hooks/useAuth';
+import { ChangePasswordModal } from '@/components/psicodoc/ChangePasswordModal';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const PsicoDocApp: React.FC = () => {
+  const { user, profile, mustChangePassword, signOut, refreshProfile } = useAuth();
+  const { toast } = useToast();
+
   // State
   const [view, setView] = useState<AppView>('home');
   const [psychoInfo, setPsychoInfo] = useState<PsychologistInfo>(INITIAL_PSYCHOLOGIST_INFO);
@@ -41,36 +40,141 @@ const PsicoDocApp: React.FC = () => {
   const [generatedDoc, setGeneratedDoc] = useState<GeneratedReport | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load from localStorage
+  // Sync profile data to psychoInfo
   useEffect(() => {
-    const savedPsycho = localStorage.getItem(STORAGE_KEYS.PSYCHO_INFO);
-    const savedPatients = localStorage.getItem(STORAGE_KEYS.PATIENTS);
-    const savedReports = localStorage.getItem(STORAGE_KEYS.REPORTS);
-    const savedAppointments = localStorage.getItem(STORAGE_KEYS.APPOINTMENTS);
+    if (profile) {
+      setPsychoInfo(prev => ({
+        ...prev,
+        name: profile.name || '',
+        crp: profile.crp || '',
+        specialty: profile.specialty || '',
+        theme: (profile.theme as 'light' | 'dark') || 'light',
+        primaryColor: (profile.primary_color as any) || 'indigo',
+      }));
+    }
+  }, [profile]);
 
-    if (savedPsycho) setPsychoInfo(JSON.parse(savedPsycho));
-    if (savedPatients) setPatients(JSON.parse(savedPatients));
-    if (savedReports) setReports(JSON.parse(savedReports));
-    if (savedAppointments) setAppointments(JSON.parse(savedAppointments));
-  }, []);
-
-  // Save to localStorage
+  // Load data from database
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.PSYCHO_INFO, JSON.stringify(psychoInfo));
-  }, [psychoInfo]);
+    if (!user) return;
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
-  }, [patients]);
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Load patients
+        const { data: patientsData, error: patientsError } = await supabase
+          .from('patients')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(reports));
-  }, [reports]);
+        if (patientsError) throw patientsError;
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
-  }, [appointments]);
+        const formattedPatients: Patient[] = (patientsData || []).map(p => ({
+          id: p.id,
+          name: p.name,
+          responsibleName: p.responsible_name || '',
+          birthDate: p.birth_date || '',
+          responsiblePhone: p.responsible_phone || '',
+          notes: (p.notes as any[]) || [],
+          files: [],
+        }));
+        setPatients(formattedPatients);
+
+        // Load appointments
+        const { data: appointmentsData, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('appointment_date', { ascending: true });
+
+        if (appointmentsError) throw appointmentsError;
+
+        const formattedAppointments: Appointment[] = (appointmentsData || []).map(a => ({
+          id: a.id,
+          date: a.appointment_date,
+          time: a.appointment_time,
+          patientName: a.patient_name,
+          patientId: a.patient_id || undefined,
+        }));
+        setAppointments(formattedAppointments);
+
+        // Load reports
+        const { data: reportsData, error: reportsError } = await supabase
+          .from('reports')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (reportsError) throw reportsError;
+
+        const formattedReports: ReportData[] = (reportsData || []).map(r => ({
+          id: r.id,
+          patientId: r.patient_id || undefined,
+          type: r.type as any,
+          patientName: r.patient_name,
+          solicitor: r.solicitor || '',
+          purpose: r.purpose || '',
+          demandDescription: r.demand_description || '',
+          procedures: r.procedures || '',
+          analysis: r.analysis || '',
+          conclusion: r.conclusion || '',
+          date: r.created_at.split('T')[0],
+          city: r.city || '',
+          specificQuestion: r.specific_question || '',
+          periodStart: r.period_start || '',
+          periodEnd: r.period_end || '',
+          generated: r.generated_content as unknown as GeneratedReport || undefined,
+        }));
+        setReports(formattedReports);
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+        toast({
+          title: 'Erro ao carregar dados',
+          description: 'Não foi possível carregar seus dados. Tente novamente.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, toast]);
+
+  // Save profile changes to database
+  const saveProfileToDb = useCallback(async (newInfo: PsychologistInfo) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: newInfo.name,
+          crp: newInfo.crp,
+          specialty: newInfo.specialty,
+          theme: newInfo.theme,
+          primary_color: newInfo.primaryColor,
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving profile:', error);
+    }
+  }, [user]);
+
+  // Update psychoInfo and save to DB
+  const handleSetPsychoInfo: React.Dispatch<React.SetStateAction<PsychologistInfo>> = (value) => {
+    setPsychoInfo(prev => {
+      const newValue = typeof value === 'function' ? value(prev) : value;
+      saveProfileToDb(newValue);
+      return newValue;
+    });
+  };
 
   // Theme class
   const themeClass = psychoInfo.theme === 'dark' ? 'dark' : '';
@@ -125,25 +229,80 @@ const PsicoDocApp: React.FC = () => {
       setView('preview');
     } catch (error) {
       console.error('Erro na geração:', error);
-      alert(error instanceof Error ? error.message : 'Erro ao gerar documento. Tente novamente.');
+      toast({
+        title: 'Erro ao gerar documento',
+        description: error instanceof Error ? error.message : 'Tente novamente.',
+        variant: 'destructive',
+      });
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleSaveReport = () => {
-    if (!generatedDoc) return;
+  const handleSaveReport = async () => {
+    if (!generatedDoc || !user) return;
     
-    const newReport: ReportData = {
-      ...reportData,
-      id: Date.now().toString(),
-      generated: generatedDoc,
-    };
-    
-    setReports(prev => [newReport, ...prev]);
-    setReportData(INITIAL_REPORT_DATA());
-    setGeneratedDoc(null);
-    setView('history');
+    try {
+      const { data, error } = await supabase
+        .from('reports')
+        .insert({
+          user_id: user.id,
+          patient_id: reportData.patientId || null,
+          type: reportData.type,
+          patient_name: reportData.patientName,
+          solicitor: reportData.solicitor,
+          purpose: reportData.purpose,
+          demand_description: reportData.demandDescription,
+          procedures: reportData.procedures,
+          analysis: reportData.analysis,
+          conclusion: reportData.conclusion,
+          city: reportData.city,
+          specific_question: reportData.specificQuestion,
+          period_start: reportData.periodStart || null,
+          period_end: reportData.periodEnd || null,
+          generated_content: generatedDoc as any,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newReport: ReportData = {
+        id: data.id,
+        patientId: data.patient_id || undefined,
+        type: data.type as any,
+        patientName: data.patient_name,
+        solicitor: data.solicitor || '',
+        purpose: data.purpose || '',
+        demandDescription: data.demand_description || '',
+        procedures: data.procedures || '',
+        analysis: data.analysis || '',
+        conclusion: data.conclusion || '',
+        date: data.created_at.split('T')[0],
+        city: data.city || '',
+        specificQuestion: data.specific_question || '',
+        periodStart: data.period_start || '',
+        periodEnd: data.period_end || '',
+        generated: generatedDoc,
+      };
+      
+      setReports(prev => [newReport, ...prev]);
+      setReportData(INITIAL_REPORT_DATA());
+      setGeneratedDoc(null);
+      setView('history');
+
+      toast({
+        title: 'Documento salvo!',
+        description: 'O documento foi salvo no histórico.',
+      });
+    } catch (error) {
+      console.error('Error saving report:', error);
+      toast({
+        title: 'Erro ao salvar',
+        description: 'Não foi possível salvar o documento.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSelectPatient = (patient: Patient) => {
@@ -170,13 +329,32 @@ const PsicoDocApp: React.FC = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando seus dados...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-300 ${themeClass}`}>
+      {/* Change Password Modal */}
+      <ChangePasswordModal isOpen={mustChangePassword} />
+
       {/* Sidebar Desktop */}
       <Sidebar 
         view={view} 
         setView={setView} 
-        primaryColor={psychoInfo.primaryColor} 
+        primaryColor={psychoInfo.primaryColor}
+        onSignOut={handleSignOut}
       />
 
       {/* Main Content */}
@@ -252,7 +430,7 @@ const PsicoDocApp: React.FC = () => {
         {view === 'profile' && (
           <ProfileView
             psychoInfo={psychoInfo}
-            setPsychoInfo={setPsychoInfo}
+            setPsychoInfo={handleSetPsychoInfo}
           />
         )}
       </main>
