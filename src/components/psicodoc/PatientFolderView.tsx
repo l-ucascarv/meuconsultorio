@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { Patient, SessionNote, PrimaryColor } from '../../types/psicodoc';
+import React, { useState, useMemo, useRef } from 'react';
+import { Patient, SessionNote, ExternalFile, PrimaryColor } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
+import { toast } from 'sonner';
 
 interface PatientFolderViewProps {
   patient: Patient;
@@ -24,14 +25,19 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
   const [search, setSearch] = useState('');
   const [newNote, setNewNote] = useState('');
   const [activeTab, setActiveTab] = useState<'evolutions' | 'files'>('evolutions');
+  const [previewFile, setPreviewFile] = useState<ExternalFile | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'note' | 'file'; id: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const currentPatient = patients.find(p => p.id === patient.id) || patient;
 
   const filteredNotes = useMemo(() => {
-    if (!patient.notes) return [];
-    if (!search.trim()) return patient.notes;
-    return patient.notes.filter(note => 
+    if (!currentPatient.notes) return [];
+    if (!search.trim()) return currentPatient.notes;
+    return currentPatient.notes.filter(note => 
       note.text.toLowerCase().includes(search.toLowerCase())
     );
-  }, [patient.notes, search]);
+  }, [currentPatient.notes, search]);
 
   const addNote = () => {
     if (!newNote.trim()) return;
@@ -51,6 +57,7 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
 
     setPatients(updatedPatients);
     setNewNote('');
+    toast.success('Evolução adicionada com sucesso!');
   };
 
   const deleteNote = (noteId: string) => {
@@ -61,9 +68,78 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
       return p;
     });
     setPatients(updatedPatients);
+    setDeleteConfirm(null);
+    toast.success('Evolução removida');
   };
 
-  const currentPatient = patients.find(p => p.id === patient.id) || patient;
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      
+      const newFile: ExternalFile = {
+        id: Date.now().toString(),
+        name: file.name,
+        type: file.type,
+        size: formatFileSize(file.size),
+        date: new Date().toISOString(),
+        content: content,
+      };
+
+      const updatedPatients = patients.map(p => {
+        if (p.id === patient.id) {
+          return { ...p, files: [newFile, ...(p.files || [])] };
+        }
+        return p;
+      });
+
+      setPatients(updatedPatients);
+      toast.success('Arquivo anexado com sucesso!');
+    };
+
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const deleteFile = (fileId: string) => {
+    const updatedPatients = patients.map(p => {
+      if (p.id === patient.id) {
+        return { ...p, files: p.files?.filter(f => f.id !== fileId) || [] };
+      }
+      return p;
+    });
+    setPatients(updatedPatients);
+    setDeleteConfirm(null);
+    toast.success('Arquivo removido');
+  };
+
+  const downloadFile = (file: ExternalFile) => {
+    const link = document.createElement('a');
+    link.href = file.content;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Download iniciado');
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <Icons.Image />;
+    return <Icons.File />;
+  };
+
+  const isImageFile = (type: string) => type.startsWith('image/');
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 py-4 page-enter">
@@ -124,7 +200,7 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
           }`}
           style={activeTab === 'evolutions' ? { background: palette.hex } : {}}
         >
-          Evoluções
+          Evoluções ({currentPatient.notes?.length || 0})
         </button>
         <button
           onClick={() => setActiveTab('files')}
@@ -135,7 +211,7 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
           }`}
           style={activeTab === 'files' ? { background: palette.hex } : {}}
         >
-          Arquivos
+          Arquivos ({currentPatient.files?.length || 0})
         </button>
       </div>
 
@@ -196,7 +272,7 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
                       <p className="text-sm whitespace-pre-wrap">{note.text}</p>
                     </div>
                     <button
-                      onClick={() => deleteNote(note.id)}
+                      onClick={() => setDeleteConfirm({ type: 'note', id: note.id })}
                       className="p-2 rounded-lg hover:bg-destructive/10 text-destructive shrink-0"
                     >
                       <Icons.Trash />
@@ -214,16 +290,168 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
       )}
 
       {activeTab === 'files' && (
-        <div className="card-elevated p-6">
-          <div className="p-10 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer active-touch">
-            <Icons.Upload />
-            <span className="text-[10px] font-black text-muted-foreground uppercase">
-              Toque para anexar
-            </span>
+        <div className="space-y-4">
+          {/* Upload Area */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept="image/*,.pdf,.doc,.docx"
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="card-elevated p-6 w-full"
+          >
+            <div className="p-10 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary/50 transition-colors">
+              <div style={{ color: palette.hex }}>
+                <Icons.Upload />
+              </div>
+              <span className="text-[10px] font-black text-muted-foreground uppercase">
+                Toque para anexar arquivo
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Imagens, PDFs, Word
+              </span>
+            </div>
+          </button>
+
+          {/* Files List */}
+          <div className="space-y-3">
+            {currentPatient.files && currentPatient.files.length > 0 ? (
+              currentPatient.files.map(file => (
+                <div key={file.id} className="card-elevated p-4">
+                  <div className="flex items-center gap-4">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: `${palette.hex}15`, color: palette.hex }}
+                    >
+                      {getFileIcon(file.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm truncate">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {file.size} • {new Date(file.date).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {isImageFile(file.type) && (
+                        <button
+                          onClick={() => setPreviewFile(file)}
+                          className="p-2 rounded-lg hover:bg-muted text-muted-foreground"
+                          title="Visualizar"
+                        >
+                          <Icons.Eye />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => downloadFile(file)}
+                        className="p-2 rounded-lg hover:bg-muted text-muted-foreground"
+                        title="Download"
+                      >
+                        <Icons.Download />
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm({ type: 'file', id: file.id })}
+                        className="p-2 rounded-lg hover:bg-destructive/10 text-destructive"
+                        title="Excluir"
+                      >
+                        <Icons.Trash />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <div 
+                  className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                  style={{ background: `${palette.hex}15` }}
+                >
+                  <div style={{ color: palette.hex }}>
+                    <Icons.FolderOpen />
+                  </div>
+                </div>
+                <p className="font-bold text-muted-foreground">Nenhum arquivo anexado</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Anexe exames, laudos e outros documentos
+                </p>
+              </div>
+            )}
           </div>
-          <p className="text-xs text-muted-foreground text-center mt-4">
-            Funcionalidade em desenvolvimento
-          </p>
+        </div>
+      )}
+
+      {/* File Preview Modal */}
+      {previewFile && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="font-black truncate">{previewFile.name}</h3>
+              <button 
+                onClick={() => setPreviewFile(null)}
+                className="p-2 rounded-full hover:bg-muted"
+              >
+                <Icons.X />
+              </button>
+            </div>
+            <div className="p-4 overflow-auto max-h-[70vh]">
+              <img 
+                src={previewFile.content} 
+                alt={previewFile.name}
+                className="w-full h-auto rounded-xl"
+              />
+            </div>
+            <div className="flex gap-3 p-4 border-t border-border">
+              <button
+                onClick={() => downloadFile(previewFile)}
+                className="flex-1 btn-primary py-3 flex items-center justify-center gap-2"
+                style={{ background: palette.hex }}
+              >
+                <Icons.Download />
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-3xl w-full max-w-sm p-6">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mx-auto mb-4">
+              <div className="text-destructive">
+                <Icons.AlertCircle />
+              </div>
+            </div>
+            <h3 className="text-xl font-black text-center mb-2">Confirmar exclusão</h3>
+            <p className="text-sm text-muted-foreground text-center mb-6">
+              {deleteConfirm.type === 'note' 
+                ? 'Tem certeza que deseja excluir esta evolução?' 
+                : 'Tem certeza que deseja excluir este arquivo?'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 py-3 rounded-xl font-bold bg-muted active-touch"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (deleteConfirm.type === 'note') {
+                    deleteNote(deleteConfirm.id);
+                  } else {
+                    deleteFile(deleteConfirm.id);
+                  }
+                }}
+                className="flex-1 py-3 rounded-xl font-bold text-white bg-destructive active-touch"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
