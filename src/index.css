@@ -171,4 +171,82 @@
       display: none !important;
     }
   }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  .print-document {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 20mm !important;
+    max-width: none !important;
+    font-family: 'Times New Roman', serif !important;
+  }
+
+  .print-document h1 {
+    font-size: 18pt !important;
+    margin-bottom: 10pt !important;
+  }
+
+  .print-document h2 {
+    font-size: 11pt !important;
+    margin-top: 16pt !important;
+    margin-bottom: 8pt !important;
+  }
+
+  .print-document section {
+    page-break-inside: avoid;
+  }
+
+  .print-document .whitespace-pre-wrap {
+    text-align: justify;
+    line-height: 1.8;
+    font-size: 12pt;
+  }
+
+  .print-document > div:last-child {
+    page-break-inside: avoid;
+    margin-top: 40pt !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
 }
