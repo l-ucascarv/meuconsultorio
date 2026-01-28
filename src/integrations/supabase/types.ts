@@ -247,7 +247,6 @@ export type Database = {
           subscription_status:
             | Database["public"]["Enums"]["subscription_status"]
             | null
-          temp_password_hash: string | null
           theme: string | null
           updated_at: string
           user_id: string
@@ -266,7 +265,6 @@ export type Database = {
           subscription_status?:
             | Database["public"]["Enums"]["subscription_status"]
             | null
-          temp_password_hash?: string | null
           theme?: string | null
           updated_at?: string
           user_id: string
@@ -285,7 +283,6 @@ export type Database = {
           subscription_status?:
             | Database["public"]["Enums"]["subscription_status"]
             | null
-          temp_password_hash?: string | null
           theme?: string | null
           updated_at?: string
           user_id?: string
