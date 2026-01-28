@@ -19,7 +19,10 @@ import {
   AgendaView, 
   HistoryView, 
   ProfileView,
-  LoadingOverlay 
+  LoadingOverlay,
+  FinancialView,
+  FinancialCategory,
+  FinancialTransaction,
 } from '../components/psicodoc';
 import { useAuth } from '@/hooks/useAuth';
 import { ChangePasswordModal } from '@/components/psicodoc/ChangePasswordModal';
@@ -41,6 +44,8 @@ const PsicoDocApp: React.FC = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [financialCategories, setFinancialCategories] = useState<FinancialCategory[]>([]);
+  const [financialTransactions, setFinancialTransactions] = useState<FinancialTransaction[]>([]);
 
   // Sync profile data to psychoInfo
   useEffect(() => {
@@ -130,6 +135,43 @@ const PsicoDocApp: React.FC = () => {
           generated: r.generated_content as unknown as GeneratedReport || undefined,
         }));
         setReports(formattedReports);
+
+        // Load financial categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('financial_categories')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true });
+
+        if (categoriesError) throw categoriesError;
+
+        const formattedCategories: FinancialCategory[] = (categoriesData || []).map(c => ({
+          id: c.id,
+          name: c.name,
+          type: c.type as 'income' | 'expense',
+          color: c.color || '#6366f1',
+        }));
+        setFinancialCategories(formattedCategories);
+
+        // Load financial transactions
+        const { data: transactionsData, error: transactionsError } = await supabase
+          .from('financial_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('transaction_date', { ascending: false });
+
+        if (transactionsError) throw transactionsError;
+
+        const formattedTransactions: FinancialTransaction[] = (transactionsData || []).map(t => ({
+          id: t.id,
+          type: t.type as 'income' | 'expense',
+          description: t.description,
+          amount: parseFloat(t.amount as unknown as string),
+          categoryId: t.category_id || undefined,
+          patientId: t.patient_id || undefined,
+          transactionDate: t.transaction_date,
+        }));
+        setFinancialTransactions(formattedTransactions);
 
       } catch (error) {
         console.error('Error loading data:', error);
@@ -423,6 +465,17 @@ const PsicoDocApp: React.FC = () => {
           <AgendaView
             appointments={appointments}
             setAppointments={setAppointments}
+            patients={patients}
+            primaryColor={psychoInfo.primaryColor}
+          />
+        )}
+
+        {view === 'financial' && (
+          <FinancialView
+            categories={financialCategories}
+            setCategories={setFinancialCategories}
+            transactions={financialTransactions}
+            setTransactions={setFinancialTransactions}
             patients={patients}
             primaryColor={psychoInfo.primaryColor}
           />

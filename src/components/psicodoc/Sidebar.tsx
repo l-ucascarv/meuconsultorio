@@ -25,6 +25,7 @@ const navItems: NavItem[] = [
   { id: 'history', label: 'Histórico', icon: <Icons.History /> },
   { id: 'patients', label: 'Pacientes', icon: <Icons.Users /> },
   { id: 'agenda', label: 'Agenda', icon: <Icons.Calendar /> },
+  { id: 'financial', label: 'Financeiro', icon: <Icons.Wallet /> },
   { id: 'profile', label: 'Perfil', icon: <Icons.User /> },
 ];
 

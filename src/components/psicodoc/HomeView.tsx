@@ -5,7 +5,7 @@ import { Icons } from './Icons';
 
 interface HomeViewProps {
   psychoInfo: PsychologistInfo;
-  setView: (view: 'create' | 'patients' | 'agenda' | 'history') => void;
+  setView: (view: 'create' | 'patients' | 'agenda' | 'history' | 'financial') => void;
   reportsCount: number;
   patientsCount: number;
   appointmentsToday: number;
@@ -93,7 +93,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </button>
           
           <button
-            onClick={() => setView('history')}
+            onClick={() => setView('financial')}
             className="card-elevated p-6 flex flex-col items-center gap-3 active-touch hover:shadow-elevation-lg transition-shadow"
           >
             <div 
@@ -101,10 +101,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
               style={{ background: `${palette.hex}15` }}
             >
               <div style={{ color: palette.hex }}>
-                <Icons.History />
+                <Icons.Wallet />
               </div>
             </div>
-            <span className="font-bold text-sm">Histórico</span>
+            <span className="font-bold text-sm">Financeiro</span>
           </button>
         </div>
       </div>
