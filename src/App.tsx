@@ -13,9 +13,9 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Protected route wrapper for regular users (subscribers)
+// Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, profile, isAdmin } = useAuth();
+  const { user, loading, profile } = useAuth();
 
   if (loading) {
     return (
@@ -29,12 +29,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Admin users should go to admin panel, not the app
-  if (isAdmin) {
-    return <Navigate to="/admin" replace />;
-  }
-
-  // Check subscription status for regular users
+  // Check subscription status
   if (profile && !['active', 'trial'].includes(profile.subscription_status)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -63,30 +58,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Protected route wrapper for admin users only
-const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, isAdmin } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // Only admins can access admin panel
-  if (!isAdmin) {
-    return <Navigate to="/app" replace />;
-  }
-
-  return <>{children}</>;
-};
-
 const AppRoutes = () => {
   return (
     <Routes>
@@ -103,9 +74,9 @@ const AppRoutes = () => {
       <Route 
         path="/admin" 
         element={
-          <AdminRoute>
+          <ProtectedRoute>
             <AdminPanel />
-          </AdminRoute>
+          </ProtectedRoute>
         } 
       />
       {/* User personalized login route */}
