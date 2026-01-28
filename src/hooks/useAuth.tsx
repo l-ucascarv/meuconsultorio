@@ -23,6 +23,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   mustChangePassword: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -38,6 +39,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const checkAdminRole = async (userId: string) => {
+    const { data } = await supabase.rpc('has_role', { 
+      _user_id: userId, 
+      _role: 'admin' 
+    });
+    return !!data;
+  };
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -71,32 +81,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id).then((profileData) => {
-              setProfile(profileData);
-              setMustChangePassword(profileData?.must_change_password ?? false);
-              setLoading(false);
-            });
+          setTimeout(async () => {
+            const profileData = await fetchProfile(session.user.id);
+            const adminStatus = await checkAdminRole(session.user.id);
+            setProfile(profileData);
+            setMustChangePassword(profileData?.must_change_password ?? false);
+            setIsAdmin(adminStatus);
+            setLoading(false);
           }, 0);
         } else {
           setProfile(null);
           setMustChangePassword(false);
+          setIsAdmin(false);
           setLoading(false);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id).then((profileData) => {
-          setProfile(profileData);
-          setMustChangePassword(profileData?.must_change_password ?? false);
-          setLoading(false);
-        });
+        const profileData = await fetchProfile(session.user.id);
+        const adminStatus = await checkAdminRole(session.user.id);
+        setProfile(profileData);
+        setMustChangePassword(profileData?.must_change_password ?? false);
+        setIsAdmin(adminStatus);
+        setLoading(false);
       } else {
         setLoading(false);
       }
@@ -174,6 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setProfile(null);
     setMustChangePassword(false);
+    setIsAdmin(false);
   };
 
   const updatePassword = async (newPassword: string) => {
@@ -212,6 +226,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       profile,
       loading,
       mustChangePassword,
+      isAdmin,
       signIn,
       signUp,
       signOut,

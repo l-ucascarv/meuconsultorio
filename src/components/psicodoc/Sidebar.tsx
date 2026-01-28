@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import { AppView, PrimaryColor } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
   view: AppView;
@@ -30,25 +27,6 @@ const navItems: NavItem[] = [
 
 export const Sidebar: React.FC<SidebarProps> = ({ view, setView, primaryColor, onSignOut }) => {
   const palette = COLOR_PALETTES[primaryColor];
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  // Check if user is admin
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (!user) return;
-
-      const { data } = await supabase.rpc('has_role', { 
-        _user_id: user.id, 
-        _role: 'admin' 
-      });
-
-      setIsAdmin(!!data);
-    };
-
-    checkAdmin();
-  }, [user]);
 
   return (
     <nav className="no-print hidden md:flex w-64 bg-sidebar text-sidebar-foreground flex-col fixed h-full z-40">
@@ -84,17 +62,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ view, setView, primaryColor, o
       </div>
       
       <div className="p-6 border-t border-sidebar-border space-y-3">
-        {isAdmin && (
-          <button
-            onClick={() => navigate('/admin')}
-            className="flex items-center gap-2 text-sm text-amber-500 hover:text-amber-400 transition-colors w-full font-medium"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            Painel Admin
-          </button>
-        )}
         {onSignOut && (
           <button
             onClick={onSignOut}
