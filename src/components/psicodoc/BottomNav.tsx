@@ -16,7 +16,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ view, setView, primaryColo
     { id: 'home' as AppView, label: 'Início', icon: <Icons.Home /> },
     { id: 'patients' as AppView, label: 'Pacientes', icon: <Icons.Users /> },
     { id: 'create' as AppView, label: 'Novo', icon: <Icons.PlusCircle />, isMain: true },
-    { id: 'agenda' as AppView, label: 'Agenda', icon: <Icons.Calendar /> },
+    { id: 'financial' as AppView, label: 'Financeiro', icon: <Icons.Wallet /> },
     { id: 'profile' as AppView, label: 'Perfil', icon: <Icons.User /> },
   ];
 
