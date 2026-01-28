@@ -33,6 +33,7 @@ export interface PsychologistInfo {
   name: string;
   crp: string;
   specialty?: string;
+  slug?: string;
   theme: AppTheme;
   primaryColor: PrimaryColor;
   plan: SubscriptionPlan;

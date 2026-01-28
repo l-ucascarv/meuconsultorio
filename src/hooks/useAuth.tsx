@@ -9,6 +9,7 @@ interface Profile {
   name: string | null;
   crp: string | null;
   specialty: string | null;
+  slug: string | null;
   theme: string;
   primary_color: string;
   subscription_status: 'active' | 'inactive' | 'pending' | 'cancelled' | 'trial';
