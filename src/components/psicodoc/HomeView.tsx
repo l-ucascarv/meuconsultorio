@@ -41,32 +41,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-4">
-        <button 
-          onClick={() => setView('history')}
-          className="card-elevated p-4 text-center active-touch"
-        >
-          <p className="text-3xl font-black" style={{ color: palette.hex }}>{reportsCount}</p>
-          <p className="text-xs font-bold text-muted-foreground mt-1">Documentos</p>
-        </button>
-        
-        <button 
-          onClick={() => setView('patients')}
-          className="card-elevated p-4 text-center active-touch"
-        >
-          <p className="text-3xl font-black" style={{ color: palette.hex }}>{patientsCount}</p>
-          <p className="text-xs font-bold text-muted-foreground mt-1">Pacientes</p>
-        </button>
-        
-        <button 
-          onClick={() => setView('agenda')}
-          className="card-elevated p-4 text-center active-touch"
-        >
-          <p className="text-3xl font-black" style={{ color: palette.hex }}>{appointmentsToday}</p>
-          <p className="text-xs font-bold text-muted-foreground mt-1">Consultas Hoje</p>
-        </button>
-      </div>
 
       {/* Quick Actions */}
       <div className="space-y-4">
