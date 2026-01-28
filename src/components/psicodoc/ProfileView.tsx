@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PsychologistInfo, PrimaryColor, SubscriptionPlan } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProfileViewProps {
   psychoInfo: PsychologistInfo;
@@ -14,6 +17,73 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 }) => {
   const palette = COLOR_PALETTES[psychoInfo.primaryColor];
   const colors: PrimaryColor[] = ['indigo', 'emerald', 'rose', 'amber', 'slate'];
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
+  const [slug, setSlug] = useState(psychoInfo.slug || '');
+  const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setSlug(profile?.slug || '');
+  }, [profile]);
+
+  // Check slug availability
+  const checkSlugAvailability = async (newSlug: string) => {
+    if (!newSlug || newSlug.length < 3) {
+      setIsSlugAvailable(null);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .rpc('get_profile_by_slug', { p_slug: newSlug });
+
+    if (error) {
+      setIsSlugAvailable(null);
+      return;
+    }
+
+    // Available if not found or if it's the current user's slug
+    const isAvailable = !data || data.length === 0 || data[0].user_id === user?.id;
+    setIsSlugAvailable(isAvailable);
+  };
+
+  const handleSlugChange = (value: string) => {
+    const formatted = value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    setSlug(formatted);
+    checkSlugAvailability(formatted);
+  };
+
+  const handleSaveSlug = async () => {
+    if (!user || !isSlugAvailable) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ slug })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setPsychoInfo(prev => ({ ...prev, slug }));
+      toast({
+        title: 'URL salva!',
+        description: `Sua URL personalizada é: ${window.location.origin}/${slug}`,
+      });
+    } catch (error) {
+      console.error('Error saving slug:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível salvar a URL.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 py-4 page-enter">
@@ -72,6 +142,54 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 className="input-field"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Custom URL */}
+        <div className="card-elevated p-6 space-y-4">
+          <h3 className="font-black text-sm uppercase tracking-widest text-muted-foreground">
+            URL Personalizada
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Crie uma URL exclusiva para acessar sua conta diretamente.
+          </p>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">
+              Seu Endereço
+            </label>
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center border border-border rounded-xl overflow-hidden bg-background">
+                <span className="px-3 text-sm text-muted-foreground bg-muted border-r border-border">
+                  {window.location.origin}/
+                </span>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => handleSlugChange(e.target.value)}
+                  placeholder="seu-nome"
+                  className="flex-1 px-3 py-3 bg-transparent focus:outline-none text-sm"
+                />
+              </div>
+              <button
+                onClick={handleSaveSlug}
+                disabled={!isSlugAvailable || slug.length < 3}
+                className="px-4 py-2 rounded-xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ 
+                  background: palette.hex, 
+                  color: 'white',
+                }}
+              >
+                Salvar
+              </button>
+            </div>
+            {slug.length >= 3 && (
+              <p className={`text-xs ml-1 ${isSlugAvailable ? 'text-emerald-500' : 'text-destructive'}`}>
+                {isSlugAvailable 
+                  ? '✓ URL disponível' 
+                  : '✗ URL já está em uso'}
+              </p>
+            )}
           </div>
         </div>
 

@@ -50,6 +50,7 @@ const PsicoDocApp: React.FC = () => {
         name: profile.name || '',
         crp: profile.crp || '',
         specialty: profile.specialty || '',
+        slug: profile.slug || '',
         theme: (profile.theme as 'light' | 'dark') || 'light',
         primaryColor: (profile.primary_color as any) || 'indigo',
       }));

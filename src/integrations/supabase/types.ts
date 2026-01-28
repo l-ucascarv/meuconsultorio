@@ -147,6 +147,7 @@ export type Database = {
           must_change_password: boolean | null
           name: string | null
           primary_color: string | null
+          slug: string | null
           specialty: string | null
           subscription_plan: string | null
           subscription_status:
@@ -165,6 +166,7 @@ export type Database = {
           must_change_password?: boolean | null
           name?: string | null
           primary_color?: string | null
+          slug?: string | null
           specialty?: string | null
           subscription_plan?: string | null
           subscription_status?:
@@ -183,6 +185,7 @@ export type Database = {
           must_change_password?: boolean | null
           name?: string | null
           primary_color?: string | null
+          slug?: string | null
           specialty?: string | null
           subscription_plan?: string | null
           subscription_status?:
@@ -266,6 +269,48 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_documents_per_month: number | null
+          max_patients: number | null
+          name: string
+          price_monthly: number
+          price_yearly: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_documents_per_month?: number | null
+          max_patients?: number | null
+          name: string
+          price_monthly?: number
+          price_yearly?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_documents_per_month?: number | null
+          max_patients?: number | null
+          name?: string
+          price_monthly?: number
+          price_yearly?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -292,6 +337,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_profile_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          crp: string
+          email: string
+          id: string
+          name: string
+          slug: string
+          specialty: string
+          user_id: string
+        }[]
+      }
       has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
