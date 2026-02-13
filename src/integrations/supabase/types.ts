@@ -432,7 +432,6 @@ export type Database = {
         Args: { p_slug: string }
         Returns: {
           crp: string
-          email: string
           id: string
           name: string
           slug: string

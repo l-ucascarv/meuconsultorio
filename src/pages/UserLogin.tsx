@@ -11,7 +11,6 @@ const passwordSchema = z.string().min(6, 'Senha deve ter pelo menos 6 caracteres
 interface UserProfile {
   id: string;
   user_id: string;
-  email: string;
   name: string | null;
   slug: string | null;
   crp: string | null;
@@ -50,7 +49,6 @@ const UserLogin: React.FC = () => {
 
         if (data && data.length > 0) {
           setProfileData(data[0] as UserProfile);
-          setEmail(data[0].email); // Pre-fill email
         } else {
           setNotFound(true);
         }
