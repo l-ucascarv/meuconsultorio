@@ -23,6 +23,7 @@ import {
   FinancialView,
   FinancialCategory,
   FinancialTransaction,
+  AvailabilitySettingsView,
 } from '../components/psicodoc';
 import { useAuth } from '@/hooks/useAuth';
 import { ChangePasswordModal } from '@/components/psicodoc/ChangePasswordModal';
@@ -478,6 +479,13 @@ const PsicoDocApp: React.FC = () => {
             setTransactions={setFinancialTransactions}
             patients={patients}
             primaryColor={psychoInfo.primaryColor}
+          />
+        )}
+
+        {view === 'availability' && (
+          <AvailabilitySettingsView
+            primaryColor={psychoInfo.primaryColor}
+            slug={psychoInfo.slug}
           />
         )}
 

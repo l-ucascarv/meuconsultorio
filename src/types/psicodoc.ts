@@ -75,7 +75,7 @@ export interface GeneratedReport {
   conclusion: string;
 }
 
-export type AppView = 'home' | 'create' | 'preview' | 'history' | 'profile' | 'agenda' | 'patients' | 'patient_folder' | 'financial';
+export type AppView = 'home' | 'create' | 'preview' | 'history' | 'profile' | 'agenda' | 'patients' | 'patient_folder' | 'financial' | 'availability';
 
 export interface CalendarDay {
   day: number;
