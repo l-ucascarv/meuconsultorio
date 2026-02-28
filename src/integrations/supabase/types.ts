@@ -58,6 +58,108 @@ export type Database = {
           },
         ]
       }
+      availability_blocks: {
+        Row: {
+          block_full_day: boolean
+          blocked_date: string
+          blocked_end_time: string | null
+          blocked_start_time: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          block_full_day?: boolean
+          blocked_date: string
+          blocked_end_time?: string | null
+          blocked_start_time?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          block_full_day?: boolean
+          blocked_date?: string
+          blocked_end_time?: string | null
+          blocked_start_time?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      availability_settings: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean
+          start_time: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          start_time?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          start_time?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      booking_config: {
+        Row: {
+          booking_enabled: boolean
+          break_between_minutes: number
+          created_at: string
+          id: string
+          max_advance_days: number
+          min_advance_hours: number
+          session_duration_minutes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_enabled?: boolean
+          break_between_minutes?: number
+          created_at?: string
+          id?: string
+          max_advance_days?: number
+          min_advance_hours?: number
+          session_duration_minutes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_enabled?: boolean
+          break_between_minutes?: number
+          created_at?: string
+          id?: string
+          max_advance_days?: number
+          min_advance_hours?: number
+          session_duration_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       financial_categories: {
         Row: {
           color: string | null

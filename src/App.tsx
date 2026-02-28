@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import PsicoDocApp from "./pages/PsicoDocApp";
 import AdminPanel from "./pages/AdminPanel";
 import UserLogin from "./pages/UserLogin";
+import PublicBooking from "./pages/PublicBooking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,8 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
+      {/* Public booking route */}
+      <Route path="/agendar/:slug" element={<PublicBooking />} />
       {/* User personalized login route */}
       <Route path="/:slug" element={<UserLogin />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -11,3 +11,4 @@ export * from './HistoryView';
 export * from './ProfileView';
 export * from './LoadingOverlay';
 export * from './FinancialView';
+export * from './AvailabilitySettingsView';
