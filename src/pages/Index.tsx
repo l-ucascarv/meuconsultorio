@@ -113,6 +113,108 @@ const Index: React.FC = () => {
         </div>
       </section>
 
+      {/* Screenshots Showcase */}
+      <section className="container mx-auto px-4 py-20">
+        <h2 className="text-3xl md:text-4xl font-black text-center text-foreground mb-4">
+          Conheça o Sistema
+        </h2>
+        <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+          Veja como o PsicoDoc AI simplifica sua rotina com ferramentas intuitivas e poderosas
+        </p>
+
+        <div className="space-y-16">
+          {/* Document Creation */}
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="order-2 md:order-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold mb-4">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Criação de Documentos
+              </div>
+              <h3 className="text-2xl font-black text-foreground mb-3">
+                Gere relatórios com IA em segundos
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Preencha os dados do paciente e a demanda, e nossa IA gera documentos completos 
+                em conformidade com a Resolução CFP 06/2019. Relatórios, laudos, pareceres, 
+                atestados e declarações — tudo pronto para uso.
+              </p>
+            </div>
+            <div className="order-1 md:order-2">
+              <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
+                <img 
+                  src="/images/screenshot-document.png" 
+                  alt="Tela de criação de documentos psicológicos com IA no PsicoDoc AI" 
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Financial Management */}
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
+                <img 
+                  src="/images/screenshot-financial.png" 
+                  alt="Dashboard de gestão financeira para psicólogos no PsicoDoc AI" 
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold mb-4">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Gestão Financeira
+              </div>
+              <h3 className="text-2xl font-black text-foreground mb-3">
+                Controle suas finanças facilmente
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Acompanhe receitas, despesas e o saldo do seu consultório em tempo real. 
+                Registre transações por paciente, categorize gastos e tenha uma visão 
+                clara da saúde financeira da sua prática.
+              </p>
+            </div>
+          </div>
+
+          {/* Patient Management */}
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="order-2 md:order-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold mb-4">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Gestão de Pacientes
+              </div>
+              <h3 className="text-2xl font-black text-foreground mb-3">
+                Organize seus pacientes
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Cadastre pacientes, armazene prontuários, acompanhe históricos de atendimento 
+                e tenha tudo organizado em um só lugar. Busca rápida e filtros inteligentes 
+                para encontrar qualquer informação.
+              </p>
+            </div>
+            <div className="order-1 md:order-2">
+              <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
+                <img 
+                  src="/images/screenshot-patients.png" 
+                  alt="Tela de gestão de pacientes no PsicoDoc AI" 
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Document Types */}
       <section className="container mx-auto px-4 py-20">
         <h2 className="text-3xl md:text-4xl font-black text-center text-foreground mb-12">
