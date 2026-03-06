@@ -13,6 +13,17 @@ function json(data: unknown, status = 200) {
   });
 }
 
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function minutesToTime(m: number): string {
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -24,12 +35,8 @@ Deno.serve(async (req) => {
   );
 
   try {
-    if (req.method === "GET") {
-      return await handleGetSlots(req, supabase);
-    }
-    if (req.method === "POST") {
-      return await handleCreateBooking(req, supabase);
-    }
+    if (req.method === "GET") return await handleGetSlots(req, supabase);
+    if (req.method === "POST") return await handleCreateBooking(req, supabase);
     return json({ error: "Method not allowed" }, 405);
   } catch (err) {
     console.error("public-booking error:", err);
@@ -37,7 +44,7 @@ Deno.serve(async (req) => {
   }
 });
 
-// GET /public-booking?slug=xxx&date=YYYY-MM-DD
+// ─── GET /public-booking?slug=xxx&date=YYYY-MM-DD ───
 async function handleGetSlots(req: Request, supabase: any) {
   const url = new URL(req.url);
   const slug = url.searchParams.get("slug");
@@ -53,7 +60,6 @@ async function handleGetSlots(req: Request, supabase: any) {
   if (profileErr || !profiles?.length) {
     return json({ error: "Profissional não encontrado" }, 404);
   }
-
   const profile = profiles[0];
 
   // Get booking config
@@ -67,17 +73,24 @@ async function handleGetSlots(req: Request, supabase: any) {
     return json({ error: "Agendamento online não disponível" }, 404);
   }
 
-  // Return profile info + config (no date = just info)
+  // Get active service types
+  const { data: serviceTypes } = await supabase
+    .from("service_types")
+    .select("id, name, price")
+    .eq("user_id", profile.user_id)
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
   const baseInfo = {
     name: profile.name,
     specialty: profile.specialty,
     crp: profile.crp,
     sessionDuration: config.session_duration_minutes,
     maxAdvanceDays: config.max_advance_days,
+    serviceTypes: serviceTypes || [],
   };
 
   if (!dateStr) {
-    // Return availability days of week
     const { data: settings } = await supabase
       .from("availability_settings")
       .select("day_of_week, is_active")
@@ -100,17 +113,11 @@ async function handleGetSlots(req: Request, supabase: any) {
   const now = new Date();
   const today = new Date(now.toISOString().split("T")[0] + "T12:00:00Z");
 
-  // Check if date is in the past
-  if (targetDate < today) {
-    return json({ ...baseInfo, slots: [] });
-  }
+  if (targetDate < today) return json({ ...baseInfo, slots: [] });
 
-  // Check max advance
   const maxDate = new Date(today);
   maxDate.setDate(maxDate.getDate() + config.max_advance_days);
-  if (targetDate > maxDate) {
-    return json({ ...baseInfo, slots: [] });
-  }
+  if (targetDate > maxDate) return json({ ...baseInfo, slots: [] });
 
   // Check day of week availability
   const dayOfWeek = new Date(dateStr + "T12:00:00").getDay();
@@ -122,9 +129,7 @@ async function handleGetSlots(req: Request, supabase: any) {
     .eq("is_active", true)
     .single();
 
-  if (!daySetting) {
-    return json({ ...baseInfo, slots: [] });
-  }
+  if (!daySetting) return json({ ...baseInfo, slots: [] });
 
   // Check full-day blocks
   const { data: blocks } = await supabase
@@ -133,8 +138,7 @@ async function handleGetSlots(req: Request, supabase: any) {
     .eq("user_id", profile.user_id)
     .eq("blocked_date", dateStr);
 
-  const fullDayBlock = (blocks || []).find((b: any) => b.block_full_day);
-  if (fullDayBlock) {
+  if ((blocks || []).find((b: any) => b.block_full_day)) {
     return json({ ...baseInfo, slots: [] });
   }
 
@@ -147,7 +151,6 @@ async function handleGetSlots(req: Request, supabase: any) {
   for (let m = startMinutes; m + config.session_duration_minutes <= endMinutes; m += step) {
     const slotTime = minutesToTime(m);
 
-    // Check if blocked
     const isBlocked = (blocks || []).some((b: any) => {
       if (b.block_full_day) return true;
       const bStart = timeToMinutes(b.blocked_start_time);
@@ -156,7 +159,6 @@ async function handleGetSlots(req: Request, supabase: any) {
     });
     if (isBlocked) continue;
 
-    // Check min advance (only for today)
     if (dateStr === now.toISOString().split("T")[0]) {
       const slotDate = new Date(`${dateStr}T${slotTime}:00`);
       const minAdvance = new Date(now.getTime() + config.min_advance_hours * 60 * 60 * 1000);
@@ -166,7 +168,7 @@ async function handleGetSlots(req: Request, supabase: any) {
     slots.push(slotTime);
   }
 
-  // Remove occupied slots (check existing appointments)
+  // Remove occupied slots
   const { data: existingApts } = await supabase
     .from("appointments")
     .select("appointment_time")
@@ -177,28 +179,26 @@ async function handleGetSlots(req: Request, supabase: any) {
     (existingApts || []).map((a: any) => a.appointment_time.substring(0, 5))
   );
 
-  const availableSlots = slots.filter((s) => !occupiedTimes.has(s));
-
-  return json({ ...baseInfo, slots: availableSlots });
+  return json({ ...baseInfo, slots: slots.filter((s) => !occupiedTimes.has(s)) });
 }
 
-// POST /public-booking
+// ─── POST /public-booking ───
 async function handleCreateBooking(req: Request, supabase: any) {
   const body = await req.json();
-  const { slug, date, time, patientName, patientAge } = body;
+  const { slug, date, time, patientName, patientAge, patientPhone, serviceTypeId } = body;
 
-  // Validate required fields
-  if (!slug || !date || !time || !patientName || !patientAge) {
-    return json({ error: "Campos obrigatórios: slug, date, time, patientName, patientAge" }, 400);
+  if (!slug || !date || !time || !patientName || !patientAge || !patientPhone) {
+    return json({ error: "Campos obrigatórios: nome, idade, telefone, data e horário" }, 400);
   }
 
-  // Sanitize inputs
   const cleanName = String(patientName).trim().substring(0, 200);
   const cleanAge = String(patientAge).trim();
+  const cleanPhone = String(patientPhone).trim().substring(0, 20);
 
   if (cleanName.length < 2) return json({ error: "Nome muito curto" }, 400);
   const ageNum = parseInt(cleanAge, 10);
   if (isNaN(ageNum) || ageNum < 0 || ageNum > 150) return json({ error: "Idade inválida" }, 400);
+  if (cleanPhone.length < 8) return json({ error: "Telefone inválido" }, 400);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ error: "Data inválida" }, 400);
   if (!/^\d{2}:\d{2}$/.test(time)) return json({ error: "Horário inválido" }, 400);
 
@@ -218,19 +218,31 @@ async function handleCreateBooking(req: Request, supabase: any) {
     return json({ error: "Agendamento online não disponível" }, 400);
   }
 
+  // Resolve service type name
+  let serviceName = "";
+  if (serviceTypeId) {
+    const { data: svc } = await supabase
+      .from("service_types")
+      .select("name, price")
+      .eq("id", serviceTypeId)
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .single();
+    if (svc) {
+      serviceName = `${svc.name} (R$ ${Number(svc.price).toFixed(2)})`;
+    }
+  }
+
   const now = new Date();
   const targetDate = new Date(date + "T12:00:00Z");
   const today = new Date(now.toISOString().split("T")[0] + "T12:00:00Z");
 
-  // Validate date not in past
   if (targetDate < today) return json({ error: "Data no passado" }, 400);
 
-  // Validate max advance
   const maxDate = new Date(today);
   maxDate.setDate(maxDate.getDate() + config.max_advance_days);
   if (targetDate > maxDate) return json({ error: "Data muito distante" }, 400);
 
-  // Validate min advance
   const slotDatetime = new Date(`${date}T${time}:00`);
   const minAdvance = new Date(now.getTime() + config.min_advance_hours * 60 * 60 * 1000);
   if (slotDatetime <= minAdvance) {
@@ -249,7 +261,6 @@ async function handleCreateBooking(req: Request, supabase: any) {
 
   if (!daySetting) return json({ error: "Dia não disponível" }, 400);
 
-  // Check time is within range
   const slotMinutes = timeToMinutes(time);
   const startMinutes = timeToMinutes(daySetting.start_time);
   const endMinutes = timeToMinutes(daySetting.end_time);
@@ -272,7 +283,7 @@ async function handleCreateBooking(req: Request, supabase: any) {
   });
   if (isBlocked) return json({ error: "Horário bloqueado" }, 400);
 
-  // Check conflict with existing appointments
+  // Check conflict
   const { data: conflict } = await supabase
     .from("appointments")
     .select("id")
@@ -287,8 +298,6 @@ async function handleCreateBooking(req: Request, supabase: any) {
 
   // Find or create patient
   let patientId: string | null = null;
-
-  // Try to find existing patient by name and phone
   const { data: existingPatients } = await supabase
     .from("patients")
     .select("id")
@@ -299,12 +308,12 @@ async function handleCreateBooking(req: Request, supabase: any) {
   if (existingPatients && existingPatients.length > 0) {
     patientId = existingPatients[0].id;
   } else {
-    // Create new patient
     const { data: newPatient, error: patientErr } = await supabase
       .from("patients")
       .insert({
         user_id: userId,
         name: cleanName,
+        responsible_phone: cleanPhone,
       })
       .select("id")
       .single();
@@ -316,6 +325,14 @@ async function handleCreateBooking(req: Request, supabase: any) {
     patientId = newPatient.id;
   }
 
+  // Build notes
+  const noteParts = [
+    "Agendamento online",
+    `Idade: ${ageNum} anos`,
+    `Tel: ${cleanPhone}`,
+  ];
+  if (serviceName) noteParts.push(`Serviço: ${serviceName}`);
+
   // Create appointment
   const { error: aptErr } = await supabase.from("appointments").insert({
     user_id: userId,
@@ -323,7 +340,7 @@ async function handleCreateBooking(req: Request, supabase: any) {
     patient_name: cleanName,
     appointment_date: date,
     appointment_time: time,
-    notes: `Agendamento online | Idade: ${ageNum} anos`,
+    notes: noteParts.join(" | "),
   });
 
   if (aptErr) {
@@ -332,15 +349,4 @@ async function handleCreateBooking(req: Request, supabase: any) {
   }
 
   return json({ success: true, message: "Consulta agendada com sucesso!" });
-}
-
-function timeToMinutes(t: string): number {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
-}
-
-function minutesToTime(m: number): string {
-  const h = Math.floor(m / 60);
-  const min = m % 60;
-  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
 }

@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 
+interface ServiceType {
+  id: string;
+  name: string;
+  price: number;
+}
+
 interface ProfessionalInfo {
   name: string;
   specialty: string;
@@ -8,6 +14,7 @@ interface ProfessionalInfo {
   sessionDuration: number;
   maxAdvanceDays: number;
   availableDays?: number[];
+  serviceTypes?: ServiceType[];
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -17,6 +24,10 @@ const monthNames = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
+
+function formatCurrency(value: number) {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
 
 const PublicBooking: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -30,7 +41,7 @@ const PublicBooking: React.FC = () => {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-  const [form, setForm] = useState({ name: '', age: '' });
+  const [form, setForm] = useState({ name: '', age: '', phone: '', serviceTypeId: '' });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -46,7 +57,12 @@ const PublicBooking: React.FC = () => {
           const data = await res.json();
           throw new Error(data.error || 'Profissional não encontrado');
         }
-        setInfo(await res.json());
+        const data = await res.json();
+        setInfo(data);
+        // Auto-select first service type
+        if (data.serviceTypes?.length) {
+          setForm((p) => ({ ...p, serviceTypeId: data.serviceTypes[0].id }));
+        }
       } catch (e: any) {
         setError(e.message);
       } finally {
@@ -102,8 +118,10 @@ const PublicBooking: React.FC = () => {
     return days;
   }, [currentMonth, info]);
 
+  const selectedService = info?.serviceTypes?.find((s) => s.id === form.serviceTypeId);
+
   const handleSubmit = async () => {
-    if (!selectedDate || !selectedTime || !form.name.trim() || !form.age.trim()) return;
+    if (!selectedDate || !selectedTime || !form.name.trim() || !form.age.trim() || !form.phone.trim()) return;
     setSubmitting(true);
     setSubmitError('');
 
@@ -117,6 +135,8 @@ const PublicBooking: React.FC = () => {
           time: selectedTime,
           patientName: form.name.trim(),
           patientAge: form.age.trim(),
+          patientPhone: form.phone.trim(),
+          serviceTypeId: form.serviceTypeId || undefined,
         }),
       });
 
@@ -170,6 +190,11 @@ const PublicBooking: React.FC = () => {
           <p className="text-gray-600 font-semibold">
             {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} às {selectedTime}
           </p>
+          {selectedService && (
+            <p className="text-indigo-600 font-bold mt-2">
+              {selectedService.name} — {formatCurrency(selectedService.price)}
+            </p>
+          )}
           <p className="text-sm text-gray-400 mt-4">Duração: {info.sessionDuration} minutos</p>
         </div>
       </div>
@@ -347,6 +372,61 @@ const PublicBooking: React.FC = () => {
                   className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
                 />
               </div>
+
+              {/* Service Type Selection */}
+              {info.serviceTypes && info.serviceTypes.length > 0 && (
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                    Tipo de serviço *
+                  </label>
+                  <div className="space-y-2 mt-2">
+                    {info.serviceTypes.map((svc) => (
+                      <button
+                        key={svc.id}
+                        type="button"
+                        onClick={() => setForm((p) => ({ ...p, serviceTypeId: svc.id }))}
+                        className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left ${
+                          form.serviceTypeId === svc.id
+                            ? 'border-indigo-600 bg-indigo-50'
+                            : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                              form.serviceTypeId === svc.id
+                                ? 'border-indigo-600 bg-indigo-600'
+                                : 'border-gray-300'
+                            }`}
+                          >
+                            {form.serviceTypeId === svc.id && (
+                              <div className="w-2 h-2 rounded-full bg-white" />
+                            )}
+                          </div>
+                          <span className="font-semibold text-sm text-gray-800">{svc.name}</span>
+                        </div>
+                        <span className="font-black text-indigo-600 text-sm">
+                          {formatCurrency(svc.price)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                  Telefone para contato *
+                </label>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                  placeholder="(11) 99999-9999"
+                  maxLength={20}
+                  className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
+                />
+              </div>
             </div>
 
             {submitError && (
@@ -357,7 +437,7 @@ const PublicBooking: React.FC = () => {
 
             <button
               onClick={handleSubmit}
-              disabled={submitting || !form.name.trim() || !form.age.trim()}
+              disabled={submitting || !form.name.trim() || !form.age.trim() || !form.phone.trim()}
               className="w-full mt-5 py-4 bg-indigo-600 text-white rounded-xl font-black text-lg shadow-xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98]"
             >
               {submitting ? 'Agendando...' : 'Confirmar Agendamento'}
