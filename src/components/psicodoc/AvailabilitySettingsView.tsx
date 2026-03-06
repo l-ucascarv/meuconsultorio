@@ -36,6 +36,13 @@ interface BlockedDate {
   reason?: string;
 }
 
+interface ServiceTypeItem {
+  id?: string;
+  name: string;
+  price: number;
+  isActive: boolean;
+}
+
 const DAY_NAMES = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
 const DEFAULT_CONFIG: BookingConfig = {
@@ -82,7 +89,6 @@ export const AvailabilitySettingsView: React.FC<AvailabilitySettingsViewProps> =
           .select('*')
           .eq('user_id', user.id);
 
-        const existingDays = new Set((settings || []).map((s: any) => s.day_of_week));
         const allDays: DaySetting[] = [];
         for (let d = 0; d < 7; d++) {
           const existing = (settings || []).find((s: any) => s.day_of_week === d);
@@ -99,7 +105,7 @@ export const AvailabilitySettingsView: React.FC<AvailabilitySettingsViewProps> =
               dayOfWeek: d,
               startTime: '08:00',
               endTime: '18:00',
-              isActive: d >= 1 && d <= 5, // Mon-Fri default
+              isActive: d >= 1 && d <= 5,
             });
           }
         }
@@ -138,6 +144,22 @@ export const AvailabilitySettingsView: React.FC<AvailabilitySettingsViewProps> =
             blockedStartTime: b.blocked_start_time,
             blockedEndTime: b.blocked_end_time,
             reason: b.reason,
+          }))
+        );
+
+        // Load service types
+        const { data: svcData } = await supabase
+          .from('service_types')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('sort_order', { ascending: true });
+
+        setServiceTypes(
+          (svcData || []).map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            price: Number(s.price),
+            isActive: s.is_active,
           }))
         );
       } catch (err) {
@@ -245,6 +267,58 @@ export const AvailabilitySettingsView: React.FC<AvailabilitySettingsViewProps> =
       toast({ title: 'Bloqueio removido' });
     } catch (err) {
       console.error('Error removing block:', err);
+    }
+  };
+
+  const handleAddServiceType = async () => {
+    if (!user || !newServiceName.trim()) return;
+    const price = parseFloat(newServicePrice) || 0;
+    try {
+      const { data, error } = await supabase
+        .from('service_types')
+        .insert({
+          user_id: user.id,
+          name: newServiceName.trim(),
+          price,
+          is_active: true,
+          sort_order: serviceTypes.length,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setServiceTypes((prev) => [
+        ...prev,
+        { id: data.id, name: data.name, price: Number(data.price), isActive: data.is_active },
+      ]);
+      setNewServiceName('');
+      setNewServicePrice('');
+      toast({ title: 'Serviço adicionado!' });
+    } catch (err) {
+      console.error('Error adding service type:', err);
+      toast({ title: 'Erro ao adicionar serviço', variant: 'destructive' });
+    }
+  };
+
+  const handleToggleServiceType = async (id: string, currentActive: boolean) => {
+    try {
+      await supabase.from('service_types').update({ is_active: !currentActive }).eq('id', id);
+      setServiceTypes((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, isActive: !currentActive } : s))
+      );
+    } catch (err) {
+      console.error('Error toggling service type:', err);
+    }
+  };
+
+  const handleRemoveServiceType = async (id: string) => {
+    try {
+      await supabase.from('service_types').delete().eq('id', id);
+      setServiceTypes((prev) => prev.filter((s) => s.id !== id));
+      toast({ title: 'Serviço removido' });
+    } catch (err) {
+      console.error('Error removing service type:', err);
     }
   };
 
@@ -385,6 +459,93 @@ export const AvailabilitySettingsView: React.FC<AvailabilitySettingsViewProps> =
             />
           </div>
         </div>
+      </div>
+
+      {/* Service Types */}
+      <div className="card-elevated p-4 space-y-3">
+        <h3 className="font-black">💼 Tipos de Serviço</h3>
+        <p className="text-xs text-muted-foreground">
+          Configure os tipos de atendimento e seus valores para exibir na página de agendamento.
+        </p>
+
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+              Nome do serviço
+            </label>
+            <input
+              type="text"
+              value={newServiceName}
+              onChange={(e) => setNewServiceName(e.target.value)}
+              placeholder="Ex: Avaliação Psicológica"
+              maxLength={100}
+              className="input-field mt-1"
+            />
+          </div>
+          <div className="w-32">
+            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+              Valor (R$)
+            </label>
+            <input
+              type="number"
+              value={newServicePrice}
+              onChange={(e) => setNewServicePrice(e.target.value)}
+              placeholder="150.00"
+              min={0}
+              step={0.01}
+              className="input-field mt-1"
+            />
+          </div>
+          <button
+            onClick={handleAddServiceType}
+            disabled={!newServiceName.trim()}
+            className="p-3.5 rounded-xl text-white shrink-0 disabled:opacity-50"
+            style={{ background: palette.hex }}
+          >
+            <Icons.PlusCircle />
+          </button>
+        </div>
+
+        {serviceTypes.length > 0 && (
+          <div className="space-y-2 mt-2">
+            {serviceTypes.map((svc) => (
+              <div
+                key={svc.id}
+                className={`flex items-center justify-between p-3 rounded-xl transition-all ${
+                  svc.isActive ? 'bg-muted' : 'bg-muted/30 opacity-60'
+                }`}
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <button
+                    onClick={() => svc.id && handleToggleServiceType(svc.id, svc.isActive)}
+                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                      svc.isActive ? 'border-transparent text-white' : 'border-muted-foreground/30'
+                    }`}
+                    style={svc.isActive ? { background: palette.hex } : {}}
+                  >
+                    {svc.isActive && (
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                  <div>
+                    <p className="font-bold text-sm">{svc.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {svc.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => svc.id && handleRemoveServiceType(svc.id)}
+                  className="p-2 rounded-lg hover:bg-destructive/10 text-destructive"
+                >
+                  <Icons.Trash />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Weekly Schedule */}
