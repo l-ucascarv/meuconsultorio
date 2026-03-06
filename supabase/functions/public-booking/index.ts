@@ -185,20 +185,20 @@ async function handleGetSlots(req: Request, supabase: any) {
 // POST /public-booking
 async function handleCreateBooking(req: Request, supabase: any) {
   const body = await req.json();
-  const { slug, date, time, patientName, patientPhone, patientEmail } = body;
+  const { slug, date, time, patientName, patientAge } = body;
 
   // Validate required fields
-  if (!slug || !date || !time || !patientName || !patientPhone) {
-    return json({ error: "Campos obrigatórios: slug, date, time, patientName, patientPhone" }, 400);
+  if (!slug || !date || !time || !patientName || !patientAge) {
+    return json({ error: "Campos obrigatórios: slug, date, time, patientName, patientAge" }, 400);
   }
 
   // Sanitize inputs
   const cleanName = String(patientName).trim().substring(0, 200);
-  const cleanPhone = String(patientPhone).trim().substring(0, 20);
-  const cleanEmail = patientEmail ? String(patientEmail).trim().substring(0, 255) : null;
+  const cleanAge = String(patientAge).trim();
 
   if (cleanName.length < 2) return json({ error: "Nome muito curto" }, 400);
-  if (cleanPhone.length < 8) return json({ error: "Telefone inválido" }, 400);
+  const ageNum = parseInt(cleanAge, 10);
+  if (isNaN(ageNum) || ageNum < 0 || ageNum > 150) return json({ error: "Idade inválida" }, 400);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ error: "Data inválida" }, 400);
   if (!/^\d{2}:\d{2}$/.test(time)) return json({ error: "Horário inválido" }, 400);
 
