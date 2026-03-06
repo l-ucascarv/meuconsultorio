@@ -322,40 +322,28 @@ const PublicBooking: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
-                  Nome completo *
+                  Nome do paciente *
                 </label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                  placeholder="Seu nome"
+                  placeholder="Nome completo"
                   maxLength={200}
                   className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
                 />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
-                  Telefone *
+                  Idade *
                 </label>
                 <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-                  placeholder="(11) 99999-9999"
-                  maxLength={20}
-                  className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
-                  E-mail (opcional)
-                </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                  placeholder="seu@email.com"
-                  maxLength={255}
+                  type="number"
+                  value={form.age}
+                  onChange={(e) => setForm((p) => ({ ...p, age: e.target.value }))}
+                  placeholder="Ex: 30"
+                  min={0}
+                  max={150}
                   className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
                 />
               </div>
