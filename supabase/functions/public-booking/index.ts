@@ -305,7 +305,6 @@ async function handleCreateBooking(req: Request, supabase: any) {
       .insert({
         user_id: userId,
         name: cleanName,
-        responsible_phone: cleanPhone,
       })
       .select("id")
       .single();
