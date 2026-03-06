@@ -81,7 +81,7 @@ const AppRoutes = () => {
         } 
       />
       {/* Public booking route */}
-      <Route path="/agendar/:slug" element={<PublicBooking />} />
+      <Route path="/:slug/agendamento" element={<PublicBooking />} />
       {/* User personalized login route */}
       <Route path="/:slug" element={<UserLogin />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
