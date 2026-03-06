@@ -67,7 +67,7 @@ export const AvailabilitySettingsView: React.FC<AvailabilitySettingsViewProps> =
   const [copied, setCopied] = useState(false);
 
   const bookingUrl = slug
-    ? `${window.location.origin}/agendar/${slug}`
+    ? `${window.location.origin}/${slug}/agendamento`
     : null;
 
   // Load data
