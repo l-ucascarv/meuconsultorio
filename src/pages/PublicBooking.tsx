@@ -103,7 +103,7 @@ const PublicBooking: React.FC = () => {
   }, [currentMonth, info]);
 
   const handleSubmit = async () => {
-    if (!selectedDate || !selectedTime || !form.name.trim() || !form.phone.trim()) return;
+    if (!selectedDate || !selectedTime || !form.name.trim() || !form.age.trim()) return;
     setSubmitting(true);
     setSubmitError('');
 
@@ -116,8 +116,7 @@ const PublicBooking: React.FC = () => {
           date: selectedDate,
           time: selectedTime,
           patientName: form.name.trim(),
-          patientPhone: form.phone.trim(),
-          patientEmail: form.email.trim() || undefined,
+          patientAge: form.age.trim(),
         }),
       });
 
