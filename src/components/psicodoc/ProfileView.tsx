@@ -73,7 +73,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       setPsychoInfo(prev => ({ ...prev, slug }));
       toast({
         title: 'URL salva!',
-        description: `Sua URL personalizada é: ${window.location.origin}/${slug}`,
+        description: `Sua URL personalizada é: ${window.location.origin}/${slug} | Agendamento: ${window.location.origin}/${slug}/agendamento`,
       });
     } catch (error) {
       console.error('Error saving slug:', error);
