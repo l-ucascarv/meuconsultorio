@@ -30,7 +30,7 @@ const PublicBooking: React.FC = () => {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-  const [form, setForm] = useState({ name: '', phone: '', email: '' });
+  const [form, setForm] = useState({ name: '', age: '' });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -103,7 +103,7 @@ const PublicBooking: React.FC = () => {
   }, [currentMonth, info]);
 
   const handleSubmit = async () => {
-    if (!selectedDate || !selectedTime || !form.name.trim() || !form.phone.trim()) return;
+    if (!selectedDate || !selectedTime || !form.name.trim() || !form.age.trim()) return;
     setSubmitting(true);
     setSubmitError('');
 
@@ -116,8 +116,7 @@ const PublicBooking: React.FC = () => {
           date: selectedDate,
           time: selectedTime,
           patientName: form.name.trim(),
-          patientPhone: form.phone.trim(),
-          patientEmail: form.email.trim() || undefined,
+          patientAge: form.age.trim(),
         }),
       });
 
@@ -323,40 +322,28 @@ const PublicBooking: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
-                  Nome completo *
+                  Nome do paciente *
                 </label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                  placeholder="Seu nome"
+                  placeholder="Nome completo"
                   maxLength={200}
                   className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
                 />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
-                  Telefone *
+                  Idade *
                 </label>
                 <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-                  placeholder="(11) 99999-9999"
-                  maxLength={20}
-                  className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
-                  E-mail (opcional)
-                </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                  placeholder="seu@email.com"
-                  maxLength={255}
+                  type="number"
+                  value={form.age}
+                  onChange={(e) => setForm((p) => ({ ...p, age: e.target.value }))}
+                  placeholder="Ex: 30"
+                  min={0}
+                  max={150}
                   className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
                 />
               </div>
@@ -370,7 +357,7 @@ const PublicBooking: React.FC = () => {
 
             <button
               onClick={handleSubmit}
-              disabled={submitting || !form.name.trim() || !form.phone.trim()}
+              disabled={submitting || !form.name.trim() || !form.age.trim()}
               className="w-full mt-5 py-4 bg-indigo-600 text-white rounded-xl font-black text-lg shadow-xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98]"
             >
               {submitting ? 'Agendando...' : 'Confirmar Agendamento'}
