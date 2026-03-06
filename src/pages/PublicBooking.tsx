@@ -357,7 +357,7 @@ const PublicBooking: React.FC = () => {
 
             <button
               onClick={handleSubmit}
-              disabled={submitting || !form.name.trim() || !form.phone.trim()}
+              disabled={submitting || !form.name.trim() || !form.age.trim()}
               className="w-full mt-5 py-4 bg-indigo-600 text-white rounded-xl font-black text-lg shadow-xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98]"
             >
               {submitting ? 'Agendando...' : 'Confirmar Agendamento'}

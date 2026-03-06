@@ -323,7 +323,7 @@ async function handleCreateBooking(req: Request, supabase: any) {
     patient_name: cleanName,
     appointment_date: date,
     appointment_time: time,
-    notes: `Agendamento online | Tel: ${cleanPhone}${cleanEmail ? ` | Email: ${cleanEmail}` : ""}`,
+    notes: `Agendamento online | Idade: ${ageNum} anos`,
   });
 
   if (aptErr) {
