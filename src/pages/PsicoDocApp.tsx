@@ -88,6 +88,30 @@ const PsicoDocApp: React.FC = () => {
           notes: (p.notes as any[]) || [],
           files: [],
         }));
+
+        // Load patient files
+        const { data: filesData } = await supabase
+          .from('patient_files')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (filesData) {
+          for (const file of filesData) {
+            const patient = formattedPatients.find(p => p.id === file.patient_id);
+            if (patient) {
+              patient.files = patient.files || [];
+              patient.files.push({
+                id: file.id,
+                name: file.name,
+                type: file.file_type || '',
+                size: file.file_size || '',
+                date: file.created_at,
+                content: file.content || file.file_url || '',
+              });
+            }
+          }
+        }
+
         setPatients(formattedPatients);
 
         // Load appointments
