@@ -398,6 +398,32 @@ const PsicoDocApp: React.FC = () => {
     }
   };
 
+  const handleDeleteReport = async (reportId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('reports')
+        .delete()
+        .eq('id', reportId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setReports(prev => prev.filter(r => r.id !== reportId));
+      toast({
+        title: 'Documento excluído',
+        description: 'O documento foi removido do histórico.',
+      });
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      toast({
+        title: 'Erro ao excluir',
+        description: 'Não foi possível excluir o documento.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
   };
