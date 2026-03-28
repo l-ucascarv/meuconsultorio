@@ -25,6 +25,7 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
   onCreateDocument,
 }) => {
   const palette = COLOR_PALETTES[primaryColor];
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [newNote, setNewNote] = useState('');
   const [activeTab, setActiveTab] = useState<'evolutions' | 'files'>('evolutions');
