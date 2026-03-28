@@ -3,6 +3,7 @@ import { Patient, SessionNote, ExternalFile, PrimaryColor } from '../../types/ps
 import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
 import { toast } from 'sonner';
+import { usePatients } from '@/hooks/usePatients';
 
 interface PatientFolderViewProps {
   patient: Patient;
@@ -27,7 +28,9 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
   const [activeTab, setActiveTab] = useState<'evolutions' | 'files'>('evolutions');
   const [previewFile, setPreviewFile] = useState<ExternalFile | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'note' | 'file'; id: string } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { updatePatient } = usePatients(patients, setPatients);
 
   const currentPatient = patients.find(p => p.id === patient.id) || patient;
 
@@ -39,37 +42,35 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
     );
   }, [currentPatient.notes, search]);
 
-  const addNote = () => {
-    if (!newNote.trim()) return;
+  const addNote = async () => {
+    if (!newNote.trim() || isSaving) return;
     
     const note: SessionNote = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
-      text: newNote,
+      text: newNote.trim(),
     };
 
-    const updatedPatients = patients.map(p => {
-      if (p.id === patient.id) {
-        return { ...p, notes: [note, ...(p.notes || [])] };
-      }
-      return p;
-    });
+    const updatedNotes = [note, ...(currentPatient.notes || [])];
+    
+    setIsSaving(true);
+    const success = await updatePatient(patient.id, { notes: updatedNotes });
+    setIsSaving(false);
 
-    setPatients(updatedPatients);
-    setNewNote('');
-    toast.success('Evolução adicionada com sucesso!');
+    if (success) {
+      setNewNote('');
+      toast.success('Evolução adicionada com sucesso!');
+    }
   };
 
-  const deleteNote = (noteId: string) => {
-    const updatedPatients = patients.map(p => {
-      if (p.id === patient.id) {
-        return { ...p, notes: p.notes?.filter(n => n.id !== noteId) || [] };
-      }
-      return p;
-    });
-    setPatients(updatedPatients);
-    setDeleteConfirm(null);
-    toast.success('Evolução removida');
+  const deleteNote = async (noteId: string) => {
+    const updatedNotes = (currentPatient.notes || []).filter(n => n.id !== noteId);
+    
+    const success = await updatePatient(patient.id, { notes: updatedNotes });
+    if (success) {
+      setDeleteConfirm(null);
+      toast.success('Evolução removida');
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,6 +176,11 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
           </div>
           <div className="flex-1">
             <p className="font-black">{patient.name}</p>
+            {patient.birthDate && (
+              <p className="text-sm text-muted-foreground">
+                Nascimento: {new Date(patient.birthDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+              </p>
+            )}
             {patient.responsibleName && (
               <p className="text-sm text-muted-foreground">
                 Responsável: {patient.responsibleName}
@@ -226,14 +232,15 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
               placeholder="Adicionar evolução da sessão..."
               rows={3}
               className="input-field resize-none mb-3"
+              maxLength={5000}
             />
             <button
               onClick={addNote}
-              disabled={!newNote.trim()}
+              disabled={!newNote.trim() || isSaving}
               className="btn-primary w-full py-3 text-base disabled:opacity-50"
               style={{ background: palette.hex }}
             >
-              Adicionar Evolução
+              {isSaving ? 'Salvando...' : 'Adicionar Evolução'}
             </button>
           </div>
 
