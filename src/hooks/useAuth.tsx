@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [mustChangePassword, setMustChangePassword] = useState(false);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, userEmail?: string, userName?: string) => {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -49,6 +49,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (error) {
       console.error('Error fetching profile:', error);
       return null;
+    }
+
+    // Auto-create profile if it doesn't exist (e.g. Google OAuth first login)
+    if (!data && userEmail) {
+      const slug = (userName || userEmail.split('@')[0])
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: userId,
+          email: userEmail,
+          name: userName || null,
+          slug,
+          must_change_password: false,
+          subscription_status: 'trial',
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error auto-creating profile:', insertError);
+        return null;
+      }
+
+      // Assign subscriber role
+      await supabase.from('user_roles').insert({ user_id: userId, role: 'subscriber' }).select();
+
+      return newProfile as Profile;
     }
 
     return data as Profile | null;
@@ -72,7 +106,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
-            fetchProfile(session.user.id).then((profileData) => {
+            const meta = session.user.user_metadata;
+            fetchProfile(
+              session.user.id,
+              session.user.email,
+              meta?.full_name || meta?.name || null
+            ).then((profileData) => {
               setProfile(profileData);
               setMustChangePassword(profileData?.must_change_password ?? false);
               setLoading(false);
@@ -92,7 +131,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id).then((profileData) => {
+        const meta = session.user.user_metadata;
+        fetchProfile(
+          session.user.id,
+          session.user.email,
+          meta?.full_name || meta?.name || null
+        ).then((profileData) => {
           setProfile(profileData);
           setMustChangePassword(profileData?.must_change_password ?? false);
           setLoading(false);
