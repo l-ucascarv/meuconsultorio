@@ -65,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ view, setView, primaryColor, o
               <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/>
             </svg>
           </div>
-          <span className="text-xl font-black tracking-tight">PsicoDoc</span>
+          <span className="font-black tracking-tight text-sm">MEU CONSULTÓRIO</span>
         </div>
       </div>
       
@@ -109,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ view, setView, primaryColor, o
           </button>
         )}
         <p className="text-xs text-sidebar-foreground/50 font-medium">
-          PsicoDoc AI © 2025
+          Meu Consultório © 2025
         </p>
       </div>
     </nav>
