@@ -45,6 +45,7 @@ export interface Appointment {
   time: string;
   patientName: string;
   patientId?: string;
+  notes?: string;
 }
 
 export interface ReportData {

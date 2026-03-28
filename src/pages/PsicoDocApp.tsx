@@ -105,6 +105,7 @@ const PsicoDocApp: React.FC = () => {
           time: a.appointment_time,
           patientName: a.patient_name,
           patientId: a.patient_id || undefined,
+          notes: a.notes || undefined,
         }));
         setAppointments(formattedAppointments);
 
