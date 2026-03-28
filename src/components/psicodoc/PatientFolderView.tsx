@@ -4,6 +4,8 @@ import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
 import { toast } from 'sonner';
 import { usePatients } from '@/hooks/usePatients';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PatientFolderViewProps {
   patient: Patient;
@@ -23,6 +25,7 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
   onCreateDocument,
 }) => {
   const palette = COLOR_PALETTES[primaryColor];
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [newNote, setNewNote] = useState('');
   const [activeTab, setActiveTab] = useState<'evolutions' | 'files'>('evolutions');
@@ -73,50 +76,79 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !user) return;
 
     const file = files[0];
     const reader = new FileReader();
     
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const content = event.target?.result as string;
       
-      const newFile: ExternalFile = {
-        id: Date.now().toString(),
-        name: file.name,
-        type: file.type,
-        size: formatFileSize(file.size),
-        date: new Date().toISOString(),
-        content: content,
-      };
+      try {
+        const { data, error } = await supabase
+          .from('patient_files')
+          .insert({
+            patient_id: patient.id,
+            user_id: user.id,
+            name: file.name,
+            file_type: file.type,
+            file_size: formatFileSize(file.size),
+            content,
+          })
+          .select()
+          .single();
 
-      const updatedPatients = patients.map(p => {
-        if (p.id === patient.id) {
-          return { ...p, files: [newFile, ...(p.files || [])] };
-        }
-        return p;
-      });
+        if (error) throw error;
 
-      setPatients(updatedPatients);
-      toast.success('Arquivo anexado com sucesso!');
+        const newFile: ExternalFile = {
+          id: data.id,
+          name: data.name,
+          type: data.file_type || '',
+          size: data.file_size || '',
+          date: data.created_at,
+          content: data.content || '',
+        };
+
+        setPatients(prev => prev.map(p => {
+          if (p.id === patient.id) {
+            return { ...p, files: [newFile, ...(p.files || [])] };
+          }
+          return p;
+        }));
+        toast.success('Arquivo anexado com sucesso!');
+      } catch (err) {
+        console.error('Error uploading file:', err);
+        toast.error('Erro ao anexar arquivo.');
+      }
     };
 
     reader.readAsDataURL(file);
     e.target.value = '';
   };
 
-  const deleteFile = (fileId: string) => {
-    const updatedPatients = patients.map(p => {
-      if (p.id === patient.id) {
-        return { ...p, files: p.files?.filter(f => f.id !== fileId) || [] };
-      }
-      return p;
-    });
-    setPatients(updatedPatients);
-    setDeleteConfirm(null);
-    toast.success('Arquivo removido');
+  const deleteFile = async (fileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('patient_files')
+        .delete()
+        .eq('id', fileId);
+
+      if (error) throw error;
+
+      setPatients(prev => prev.map(p => {
+        if (p.id === patient.id) {
+          return { ...p, files: p.files?.filter(f => f.id !== fileId) || [] };
+        }
+        return p;
+      }));
+      setDeleteConfirm(null);
+      toast.success('Arquivo removido');
+    } catch (err) {
+      console.error('Error deleting file:', err);
+      toast.error('Erro ao remover arquivo.');
+    }
   };
 
   const downloadFile = (file: ExternalFile) => {

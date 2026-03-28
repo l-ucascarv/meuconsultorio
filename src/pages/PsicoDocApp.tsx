@@ -88,6 +88,30 @@ const PsicoDocApp: React.FC = () => {
           notes: (p.notes as any[]) || [],
           files: [],
         }));
+
+        // Load patient files
+        const { data: filesData } = await supabase
+          .from('patient_files')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (filesData) {
+          for (const file of filesData) {
+            const patient = formattedPatients.find(p => p.id === file.patient_id);
+            if (patient) {
+              patient.files = patient.files || [];
+              patient.files.push({
+                id: file.id,
+                name: file.name,
+                type: file.file_type || '',
+                size: file.file_size || '',
+                date: file.created_at,
+                content: file.content || file.file_url || '',
+              });
+            }
+          }
+        }
+
         setPatients(formattedPatients);
 
         // Load appointments
@@ -374,6 +398,32 @@ const PsicoDocApp: React.FC = () => {
     }
   };
 
+  const handleDeleteReport = async (reportId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('reports')
+        .delete()
+        .eq('id', reportId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setReports(prev => prev.filter(r => r.id !== reportId));
+      toast({
+        title: 'Documento excluído',
+        description: 'O documento foi removido do histórico.',
+      });
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      toast({
+        title: 'Erro ao excluir',
+        description: 'Não foi possível excluir o documento.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
   };
@@ -440,6 +490,7 @@ const PsicoDocApp: React.FC = () => {
             reports={reports}
             primaryColor={psychoInfo.primaryColor}
             onSelectReport={handleSelectReport}
+            onDeleteReport={handleDeleteReport}
           />
         )}
 
@@ -454,7 +505,7 @@ const PsicoDocApp: React.FC = () => {
 
         {view === 'patient_folder' && selectedPatient && (
           <PatientFolderView
-            patient={selectedPatient}
+            patient={patients.find(p => p.id === selectedPatient.id) || selectedPatient}
             patients={patients}
             setPatients={setPatients}
             primaryColor={psychoInfo.primaryColor}
