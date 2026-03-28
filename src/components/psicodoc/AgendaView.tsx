@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Appointment, Patient, PrimaryColor, CalendarDay, DayInfo } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
+import { AppointmentDetailDrawer } from './AppointmentDetailDrawer';
 
 interface AgendaViewProps {
   appointments: Appointment[];
@@ -20,6 +21,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<DayInfo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [newAppointment, setNewAppointment] = useState({
     patientId: '',
     date: '',
@@ -94,6 +96,10 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
     }
   };
 
+  const handleAppointmentClick = (apt: Appointment) => {
+    setSelectedAppointment(apt);
+  };
+
   const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   const monthNames = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -104,24 +110,28 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
     return dateStr === new Date().toISOString().split('T')[0];
   };
 
+  const selectedPatient = selectedAppointment?.patientId
+    ? patients.find(p => p.id === selectedAppointment.patientId) || null
+    : null;
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6 py-4 page-enter">
+    <div className="max-w-4xl mx-auto space-y-4 md:space-y-6 py-2 md:py-4 page-enter">
       {/* Header */}
-      <header className="flex flex-wrap justify-between items-center gap-3 px-2">
-        <h2 className="text-2xl md:text-3xl font-black">Agenda</h2>
-        <div className="flex items-center gap-2">
+      <header className="flex justify-between items-center gap-3 px-1 md:px-2">
+        <h2 className="text-xl md:text-3xl font-black">Agenda</h2>
+        <div className="flex items-center gap-1.5 md:gap-2">
           <button
             onClick={() => {
               setNewAppointment(prev => ({ ...prev, date: new Date().toISOString().split('T')[0] }));
               setIsModalOpen(true);
             }}
-            className="p-3 text-white rounded-xl shadow-lg active-touch flex items-center gap-2"
+            className="p-2.5 md:p-3 text-white rounded-xl shadow-lg active:scale-95 transition-transform flex items-center gap-2"
             style={{ background: palette.hex }}
           >
             <Icons.PlusCircle />
             <span className="hidden md:inline font-bold text-sm">Novo Agendamento</span>
           </button>
-          <div className="flex gap-1">
+          <div className="flex gap-0.5 md:gap-1">
             <button
               onClick={() => {
                 const d = new Date(currentDate);
@@ -129,7 +139,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                 setCurrentDate(d);
                 setSelectedDay(null);
               }}
-              className="p-2.5 bg-card rounded-xl shadow-sm active-touch"
+              className="p-2 md:p-2.5 bg-card rounded-xl shadow-sm active:scale-95 transition-transform"
             >
               <Icons.ChevronLeft />
             </button>
@@ -140,7 +150,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                 setCurrentDate(d);
                 setSelectedDay(null);
               }}
-              className="p-2.5 bg-card rounded-xl shadow-sm active-touch"
+              className="p-2 md:p-2.5 bg-card rounded-xl shadow-sm active:scale-95 transition-transform"
             >
               <Icons.ChevronRight />
             </button>
@@ -150,30 +160,28 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
 
       {/* Month/Year */}
       <div className="text-center">
-        <h3 className="text-xl font-black">
+        <h3 className="text-lg md:text-xl font-black">
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h3>
       </div>
 
       {/* Calendar Grid */}
-      <div className="card-elevated p-4">
-        {/* Week Days Header */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="card-elevated p-3 md:p-4">
+        <div className="grid grid-cols-7 gap-0.5 md:gap-1 mb-2">
           {weekDays.map(day => (
-            <div key={day} className="text-center text-[10px] font-black text-muted-foreground uppercase">
+            <div key={day} className="text-center text-[9px] md:text-[10px] font-black text-muted-foreground uppercase">
               {day}
             </div>
           ))}
         </div>
 
-        {/* Days Grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0.5 md:gap-1">
           {calendarDays.map((day, index) => (
             <button
               key={index}
               disabled={!day}
               onClick={() => day && setSelectedDay({ date: day.date, appointments: day.appointments })}
-              className={`aspect-square rounded-xl flex flex-col items-center justify-center p-1 transition-all ${
+              className={`aspect-square rounded-lg md:rounded-xl flex flex-col items-center justify-center p-0.5 md:p-1 transition-all active:scale-95 ${
                 !day 
                   ? 'invisible' 
                   : selectedDay?.date === day.date
@@ -186,12 +194,12 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
             >
               {day && (
                 <>
-                  <span className={`text-sm font-bold ${isToday(day.date) && selectedDay?.date !== day.date ? 'text-primary' : ''}`} style={isToday(day.date) && selectedDay?.date !== day.date ? { color: palette.hex } : {}}>
+                  <span className={`text-xs md:text-sm font-bold ${isToday(day.date) && selectedDay?.date !== day.date ? 'text-primary' : ''}`} style={isToday(day.date) && selectedDay?.date !== day.date ? { color: palette.hex } : {}}>
                     {day.day}
                   </span>
                   {day.appointments.length > 0 && (
                     <div 
-                      className={`w-1.5 h-1.5 rounded-full mt-0.5 ${selectedDay?.date === day.date ? 'bg-white' : ''}`}
+                      className={`w-1 md:w-1.5 h-1 md:h-1.5 rounded-full mt-0.5 ${selectedDay?.date === day.date ? 'bg-white' : ''}`}
                       style={selectedDay?.date !== day.date ? { background: palette.hex } : {}}
                     />
                   )}
@@ -204,9 +212,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
 
       {/* Selected Day Appointments */}
       {selectedDay && (
-        <div className="card-elevated p-4 animate-fade-in">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-black">
+        <div className="card-elevated p-3 md:p-4 animate-fade-in">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <h4 className="font-black text-sm md:text-base">
               {new Date(selectedDay.date + 'T12:00:00').toLocaleDateString('pt-BR', {
                 weekday: 'long',
                 day: 'numeric',
@@ -218,7 +226,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                 setNewAppointment(prev => ({ ...prev, date: selectedDay.date }));
                 setIsModalOpen(true);
               }}
-              className="text-sm font-bold"
+              className="text-xs md:text-sm font-bold"
               style={{ color: palette.hex }}
             >
               + Adicionar
@@ -232,39 +240,50 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                 .map(apt => (
                   <div 
                     key={apt.id} 
-                    className="flex items-center justify-between p-3 rounded-xl bg-muted"
+                    className="flex items-center justify-between p-3 rounded-xl bg-muted active:scale-[0.98] transition-transform cursor-pointer"
+                    onClick={() => handleAppointmentClick(apt)}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div 
-                        className="w-1.5 h-10 rounded-full"
+                        className="w-1.5 h-10 rounded-full shrink-0"
                         style={{ background: palette.hex }}
                       />
-                      <div>
-                        <p className="font-bold text-sm">{apt.patientName}</p>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm truncate">{apt.patientName}</p>
                         <p className="text-xs text-muted-foreground">{apt.time}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleDeleteAppointment(apt.id)}
-                      className="p-2 rounded-lg hover:bg-destructive/10 text-destructive"
-                    >
-                      <Icons.Trash />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      <span className="text-[10px] font-bold text-muted-foreground hidden md:inline">Ver detalhes</span>
+                      <Icons.ChevronRight />
+                    </div>
                   </div>
                 ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-4">
+            <p className="text-center text-muted-foreground py-4 text-sm">
               Nenhum agendamento para este dia
             </p>
           )}
         </div>
       )}
 
+      {/* Appointment Detail Drawer */}
+      {selectedAppointment && (
+        <AppointmentDetailDrawer
+          appointment={selectedAppointment}
+          patient={selectedPatient}
+          primaryColor={primaryColor}
+          onClose={() => setSelectedAppointment(null)}
+          onDelete={handleDeleteAppointment}
+        />
+      )}
+
       {/* Add Appointment Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
-          <div className="bg-card rounded-t-3xl md:rounded-3xl w-full max-w-md p-6 animate-slide-up">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-0 md:p-4" onClick={() => setIsModalOpen(false)}>
+          <div className="bg-card rounded-t-3xl md:rounded-3xl w-full max-w-md p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mb-4 md:hidden" />
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-black">Novo Agendamento</h3>
               <button 
