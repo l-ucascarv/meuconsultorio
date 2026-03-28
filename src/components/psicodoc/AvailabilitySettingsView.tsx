@@ -126,6 +126,16 @@ export const AvailabilitySettingsView: React.FC<AvailabilitySettingsViewProps> =
             maxAdvanceDays: configData.max_advance_days,
             bookingEnabled: configData.booking_enabled,
           });
+        } else {
+          // Auto-create default config
+          await supabase.from('booking_config').insert({
+            user_id: user.id,
+            session_duration_minutes: 50,
+            break_between_minutes: 10,
+            min_advance_hours: 2,
+            max_advance_days: 60,
+            booking_enabled: true,
+          });
         }
 
         // Load blocks

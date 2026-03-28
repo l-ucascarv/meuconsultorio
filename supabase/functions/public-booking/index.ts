@@ -62,14 +62,35 @@ async function handleGetSlots(req: Request, supabase: any) {
   }
   const profile = profiles[0];
 
-  // Get booking config
-  const { data: config } = await supabase
+  // Get or create booking config
+  let { data: config } = await supabase
     .from("booking_config")
     .select("*")
     .eq("user_id", profile.user_id)
     .single();
 
-  if (!config || !config.booking_enabled) {
+  if (!config) {
+    // Auto-create default config
+    const { data: newConfig, error: createErr } = await supabase
+      .from("booking_config")
+      .insert({
+        user_id: profile.user_id,
+        session_duration_minutes: 50,
+        break_between_minutes: 10,
+        min_advance_hours: 2,
+        max_advance_days: 60,
+        booking_enabled: true,
+      })
+      .select()
+      .single();
+
+    if (createErr || !newConfig) {
+      return json({ error: "Agendamento online não disponível" }, 404);
+    }
+    config = newConfig;
+  }
+
+  if (!config.booking_enabled) {
     return json({ error: "Agendamento online não disponível" }, 404);
   }
 
