@@ -4,6 +4,8 @@ import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
 import { toast } from 'sonner';
 import { usePatients } from '@/hooks/usePatients';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PatientFolderViewProps {
   patient: Patient;
