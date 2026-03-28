@@ -27,7 +27,9 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
 
   const handlePrint = () => {
     setShowPrintModal(false);
-    window.print();
+    setTimeout(() => {
+      window.print();
+    }, 300);
   };
 
   const handleDownloadTxt = () => {
