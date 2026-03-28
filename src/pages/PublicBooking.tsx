@@ -29,6 +29,13 @@ function formatCurrency(value: number) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+function formatPhone(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 const PublicBooking: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [info, setInfo] = useState<ProfessionalInfo | null>(null);
@@ -46,7 +53,6 @@ const PublicBooking: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // Load professional info
   useEffect(() => {
     const load = async () => {
       try {
@@ -59,7 +65,6 @@ const PublicBooking: React.FC = () => {
         }
         const data = await res.json();
         setInfo(data);
-        // Auto-select first service type
         if (data.serviceTypes?.length) {
           setForm((p) => ({ ...p, serviceTypeId: data.serviceTypes[0].id }));
         }
@@ -72,7 +77,6 @@ const PublicBooking: React.FC = () => {
     if (slug) load();
   }, [slug]);
 
-  // Load slots when date selected
   useEffect(() => {
     if (!selectedDate) return;
     const loadSlots = async () => {
@@ -93,7 +97,6 @@ const PublicBooking: React.FC = () => {
     loadSlots();
   }, [selectedDate, slug]);
 
-  // Calendar days
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -177,84 +180,94 @@ const PublicBooking: React.FC = () => {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-white p-4">
-        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md text-center animate-fade-in">
-          <div className="w-20 h-20 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-8 max-w-md w-full text-center animate-fade-in">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4 sm:mb-6">
+            <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2">Consulta agendada com sucesso!</h2>
-          <p className="text-gray-500 mb-2">
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-2">Consulta agendada com sucesso!</h2>
+          <p className="text-gray-500 mb-2 text-sm sm:text-base">
             Sua consulta com <strong>{info.name}</strong> foi confirmada.
           </p>
-          <p className="text-gray-600 font-semibold">
+          <p className="text-gray-600 font-semibold text-sm sm:text-base">
             {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} às {selectedTime}
           </p>
           {selectedService && (
-            <p className="text-indigo-600 font-bold mt-2">
+            <p className="text-indigo-600 font-bold mt-2 text-sm sm:text-base">
               {selectedService.name} — {formatCurrency(selectedService.price)}
             </p>
           )}
-          <p className="text-sm text-gray-400 mt-4">Duração: {info.sessionDuration} minutos</p>
+          <p className="text-xs sm:text-sm text-gray-400 mt-4">Duração: {info.sessionDuration} minutos</p>
         </div>
       </div>
     );
   }
 
   const todayStr = new Date().toISOString().split('T')[0];
+  const currentStep = !selectedDate ? 1 : !selectedTime ? 2 : 3;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-8 px-4">
-      <div className="max-w-lg mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 pb-8">
+      {/* Sticky header mobile */}
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b border-gray-100 px-4 py-3 sm:relative sm:bg-transparent sm:border-none sm:backdrop-blur-none sm:pt-8 sm:pb-0">
+        <div className="max-w-lg mx-auto flex items-center gap-3 sm:flex-col sm:text-center">
+          <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
           </div>
-          <h1 className="text-2xl font-black text-gray-900">{info.name}</h1>
-          <p className="text-gray-500 font-medium">{info.specialty}</p>
-          {info.crp && <p className="text-gray-400 text-sm">CRP: {info.crp}</p>}
-          <p className="text-indigo-600 font-semibold text-sm mt-2">
+          <div>
+            <h1 className="text-lg sm:text-2xl font-black text-gray-900 leading-tight">{info.name}</h1>
+            <p className="text-gray-500 font-medium text-xs sm:text-base">{info.specialty}</p>
+            {info.crp && <p className="text-gray-400 text-[10px] sm:text-sm">CRP: {info.crp}</p>}
+          </div>
+          <p className="hidden sm:block text-indigo-600 font-semibold text-sm mt-1">
             Sessão de {info.sessionDuration} minutos
           </p>
         </div>
+      </div>
 
+      <div className="max-w-lg mx-auto px-3 sm:px-4 space-y-4 sm:space-y-6 mt-4 sm:mt-6">
         {/* Step indicator */}
-        <div className="flex items-center justify-center gap-2 text-sm font-bold">
-          <span className={`px-3 py-1 rounded-full ${selectedDate ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-600 text-white'}`}>
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold">
+          <span className={`px-2.5 py-1 rounded-full transition-colors ${currentStep === 1 ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700'}`}>
             1. Data
           </span>
           <span className="text-gray-300">→</span>
-          <span className={`px-3 py-1 rounded-full ${selectedTime ? 'bg-indigo-100 text-indigo-700' : selectedDate ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+          <span className={`px-2.5 py-1 rounded-full transition-colors ${currentStep === 2 ? 'bg-indigo-600 text-white' : currentStep > 2 ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400'}`}>
             2. Horário
           </span>
           <span className="text-gray-300">→</span>
-          <span className={`px-3 py-1 rounded-full ${selectedTime ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+          <span className={`px-2.5 py-1 rounded-full transition-colors ${currentStep === 3 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
             3. Dados
           </span>
         </div>
 
+        {/* Session duration mobile */}
+        <p className="sm:hidden text-center text-indigo-600 font-semibold text-xs">
+          Sessão de {info.sessionDuration} minutos
+        </p>
+
         {/* Calendar */}
-        <div className="bg-white rounded-2xl shadow-lg p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-2xl shadow-lg p-3 sm:p-5">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <button
               onClick={() => {
                 const d = new Date(currentMonth);
                 d.setMonth(d.getMonth() - 1);
                 setCurrentMonth(d);
               }}
-              className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-xl hover:bg-gray-100 active:scale-95 transition-all"
             >
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h3 className="text-lg font-black text-gray-900">
+            <h3 className="text-base sm:text-lg font-black text-gray-900">
               {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </h3>
             <button
@@ -263,7 +276,7 @@ const PublicBooking: React.FC = () => {
                 d.setMonth(d.getMonth() + 1);
                 setCurrentMonth(d);
               }}
-              className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-xl hover:bg-gray-100 active:scale-95 transition-all"
             >
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -271,21 +284,21 @@ const PublicBooking: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-2">
             {weekDayNames.map((d) => (
-              <div key={d} className="text-center text-xs font-bold text-gray-400 uppercase">
+              <div key={d} className="text-center text-[9px] sm:text-xs font-bold text-gray-400 uppercase">
                 {d}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
             {calendarDays.map((day, i) => (
               <button
                 key={i}
                 disabled={!day || day.disabled}
                 onClick={() => day && !day.disabled && setSelectedDate(day.date)}
-                className={`aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all ${
+                className={`aspect-square rounded-lg sm:rounded-xl flex items-center justify-center text-xs sm:text-sm font-bold transition-all active:scale-95 ${
                   !day
                     ? 'invisible'
                     : day.disabled
@@ -305,8 +318,8 @@ const PublicBooking: React.FC = () => {
 
         {/* Time Slots */}
         {selectedDate && (
-          <div className="bg-white rounded-2xl shadow-lg p-5 animate-fade-in">
-            <h4 className="font-black text-gray-900 mb-3">
+          <div className="bg-white rounded-2xl shadow-lg p-3 sm:p-5 animate-fade-in">
+            <h4 className="font-black text-gray-900 mb-3 text-sm sm:text-base">
               {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', {
                 weekday: 'long',
                 day: 'numeric',
@@ -319,14 +332,14 @@ const PublicBooking: React.FC = () => {
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600" />
               </div>
             ) : slots.length === 0 ? (
-              <p className="text-center text-gray-400 py-6">Nenhum horário disponível nesta data</p>
+              <p className="text-center text-gray-400 py-6 text-sm">Nenhum horário disponível nesta data</p>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
                 {slots.map((t) => (
                   <button
                     key={t}
                     onClick={() => setSelectedTime(t)}
-                    className={`py-3 rounded-xl text-sm font-bold transition-all ${
+                    className={`py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
                       selectedTime === t
                         ? 'bg-indigo-600 text-white shadow-lg'
                         : 'bg-gray-50 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
@@ -342,11 +355,11 @@ const PublicBooking: React.FC = () => {
 
         {/* Booking Form */}
         {selectedTime && (
-          <div className="bg-white rounded-2xl shadow-lg p-5 animate-fade-in">
-            <h4 className="font-black text-gray-900 mb-4">Seus dados</h4>
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-5 animate-fade-in">
+            <h4 className="font-black text-gray-900 mb-4 text-sm sm:text-base">Seus dados</h4>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                <label className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
                   Nome do paciente *
                 </label>
                 <input
@@ -355,11 +368,11 @@ const PublicBooking: React.FC = () => {
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                   placeholder="Nome completo"
                   maxLength={200}
-                  className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
+                  className="w-full mt-1 p-3 sm:p-3.5 bg-gray-50 rounded-xl font-semibold text-sm outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                <label className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
                   Idade *
                 </label>
                 <input
@@ -369,43 +382,43 @@ const PublicBooking: React.FC = () => {
                   placeholder="Ex: 30"
                   min={0}
                   max={150}
-                  className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
+                  className="w-full mt-1 p-3 sm:p-3.5 bg-gray-50 rounded-xl font-semibold text-sm outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
                 />
               </div>
 
               {/* Service Type Selection */}
               {info.serviceTypes && info.serviceTypes.length > 0 && (
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                  <label className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
                     Tipo de serviço *
                   </label>
-                  <div className="space-y-2 mt-2">
+                  <div className="space-y-1.5 sm:space-y-2 mt-2">
                     {info.serviceTypes.map((svc) => (
                       <button
                         key={svc.id}
                         type="button"
                         onClick={() => setForm((p) => ({ ...p, serviceTypeId: svc.id }))}
-                        className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left ${
+                        className={`w-full flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all text-left active:scale-[0.98] ${
                           form.serviceTypeId === svc.id
                             ? 'border-indigo-600 bg-indigo-50'
                             : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2.5 sm:gap-3">
                           <div
-                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                            className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                               form.serviceTypeId === svc.id
                                 ? 'border-indigo-600 bg-indigo-600'
                                 : 'border-gray-300'
                             }`}
                           >
                             {form.serviceTypeId === svc.id && (
-                              <div className="w-2 h-2 rounded-full bg-white" />
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white" />
                             )}
                           </div>
-                          <span className="font-semibold text-sm text-gray-800">{svc.name}</span>
+                          <span className="font-semibold text-xs sm:text-sm text-gray-800">{svc.name}</span>
                         </div>
-                        <span className="font-black text-indigo-600 text-sm">
+                        <span className="font-black text-indigo-600 text-xs sm:text-sm">
                           {formatCurrency(svc.price)}
                         </span>
                       </button>
@@ -415,22 +428,22 @@ const PublicBooking: React.FC = () => {
               )}
 
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                <label className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
                   Telefone para contato *
                 </label>
                 <input
                   type="tel"
                   value={form.phone}
-                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                  onChange={(e) => setForm((p) => ({ ...p, phone: formatPhone(e.target.value) }))}
                   placeholder="(11) 99999-9999"
-                  maxLength={20}
-                  className="w-full mt-1 p-3.5 bg-gray-50 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
+                  maxLength={16}
+                  className="w-full mt-1 p-3 sm:p-3.5 bg-gray-50 rounded-xl font-semibold text-sm outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
                 />
               </div>
             </div>
 
             {submitError && (
-              <div className="mt-3 p-3 bg-red-50 text-red-600 rounded-xl text-sm font-semibold">
+              <div className="mt-3 p-3 bg-red-50 text-red-600 rounded-xl text-xs sm:text-sm font-semibold">
                 {submitError}
               </div>
             )}
@@ -438,20 +451,20 @@ const PublicBooking: React.FC = () => {
             <button
               onClick={handleSubmit}
               disabled={submitting || !form.name.trim() || !form.age.trim() || !form.phone.trim()}
-              className="w-full mt-5 py-4 bg-indigo-600 text-white rounded-xl font-black text-lg shadow-xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98]"
+              className="w-full mt-5 py-3.5 sm:py-4 bg-indigo-600 text-white rounded-xl font-black text-base sm:text-lg shadow-xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98]"
             >
               {submitting ? 'Agendando...' : 'Confirmar Agendamento'}
             </button>
 
-            <p className="text-xs text-gray-400 text-center mt-3">
+            <p className="text-[10px] sm:text-xs text-gray-400 text-center mt-3">
               Ao confirmar, você concorda com o agendamento da consulta.
             </p>
           </div>
         )}
 
         {/* Footer */}
-        <p className="text-center text-xs text-gray-400 pb-4">
-          Powered by <span className="font-bold">PsicoDoc AI</span>
+        <p className="text-center text-[10px] sm:text-xs text-gray-400 pb-4">
+          Powered by <span className="font-bold">Meu Consultório</span>
         </p>
       </div>
     </div>
