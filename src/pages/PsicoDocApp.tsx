@@ -490,6 +490,7 @@ const PsicoDocApp: React.FC = () => {
             reports={reports}
             primaryColor={psychoInfo.primaryColor}
             onSelectReport={handleSelectReport}
+            onDeleteReport={handleDeleteReport}
           />
         )}
 
@@ -504,7 +505,7 @@ const PsicoDocApp: React.FC = () => {
 
         {view === 'patient_folder' && selectedPatient && (
           <PatientFolderView
-            patient={selectedPatient}
+            patient={patients.find(p => p.id === selectedPatient.id) || selectedPatient}
             patients={patients}
             setPatients={setPatients}
             primaryColor={psychoInfo.primaryColor}
