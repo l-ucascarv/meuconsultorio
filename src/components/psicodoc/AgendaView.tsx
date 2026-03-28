@@ -3,6 +3,9 @@ import { Appointment, Patient, PrimaryColor, CalendarDay, DayInfo } from '../../
 import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
 import { AppointmentDetailDrawer } from './AppointmentDetailDrawer';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface AgendaViewProps {
   appointments: Appointment[];
@@ -18,10 +21,13 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   primaryColor,
 }) => {
   const palette = COLOR_PALETTES[primaryColor];
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<DayInfo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [newAppointment, setNewAppointment] = useState({
     patientId: '',
     date: '',
@@ -52,46 +58,112 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
     return days;
   }, [currentDate, appointments]);
 
-  const handleAddAppointment = () => {
-    if (!newAppointment.patientId || !newAppointment.date || !newAppointment.time) return;
+  const handleAddAppointment = async () => {
+    if (!newAppointment.patientId || !newAppointment.date || !newAppointment.time || !user) return;
     
     const patient = patients.find(p => p.id === newAppointment.patientId);
     if (!patient) return;
 
-    const appointment: Appointment = {
-      id: Date.now().toString(),
-      patientId: patient.id,
-      patientName: patient.name,
-      date: newAppointment.date,
-      time: newAppointment.time,
-    };
-
-    const updated = [...appointments, appointment].sort((a, b) => {
-      if (a.date !== b.date) return a.date.localeCompare(b.date);
-      return a.time.localeCompare(b.time);
-    });
-
-    setAppointments(updated);
-    
-    if (selectedDay && selectedDay.date === appointment.date) {
-      setSelectedDay({
-        ...selectedDay,
-        appointments: updated.filter(a => a.date === selectedDay.date),
+    // Check for time conflicts
+    const conflict = appointments.find(
+      a => a.date === newAppointment.date && a.time === newAppointment.time
+    );
+    if (conflict) {
+      toast({
+        title: 'Horário indisponível',
+        description: 'Já existe um agendamento neste horário.',
+        variant: 'destructive',
       });
+      return;
     }
 
-    setNewAppointment({ patientId: '', date: newAppointment.date, time: '08:00' });
-    setIsModalOpen(false);
+    setIsSaving(true);
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert({
+          user_id: user.id,
+          patient_id: patient.id,
+          patient_name: patient.name,
+          appointment_date: newAppointment.date,
+          appointment_time: newAppointment.time,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const appointment: Appointment = {
+        id: data.id,
+        patientId: data.patient_id || undefined,
+        patientName: data.patient_name,
+        date: data.appointment_date,
+        time: data.appointment_time,
+        notes: data.notes || undefined,
+      };
+
+      const updated = [...appointments, appointment].sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return a.time.localeCompare(b.time);
+      });
+
+      setAppointments(updated);
+      
+      if (selectedDay && selectedDay.date === appointment.date) {
+        setSelectedDay({
+          ...selectedDay,
+          appointments: updated.filter(a => a.date === selectedDay.date),
+        });
+      }
+
+      setNewAppointment({ patientId: '', date: newAppointment.date, time: '08:00' });
+      setIsModalOpen(false);
+
+      toast({
+        title: 'Agendamento criado!',
+        description: `${patient.name} agendado para ${newAppointment.date} às ${newAppointment.time}.`,
+      });
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      toast({
+        title: 'Erro ao agendar',
+        description: 'Não foi possível criar o agendamento.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDeleteAppointment = (id: string) => {
-    const updated = appointments.filter(a => a.id !== id);
-    setAppointments(updated);
-    
-    if (selectedDay) {
-      setSelectedDay({
-        ...selectedDay,
-        appointments: updated.filter(a => a.date === selectedDay.date),
+  const handleDeleteAppointment = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      const updated = appointments.filter(a => a.id !== id);
+      setAppointments(updated);
+      
+      if (selectedDay) {
+        setSelectedDay({
+          ...selectedDay,
+          appointments: updated.filter(a => a.date === selectedDay.date),
+        });
+      }
+
+      toast({
+        title: 'Consulta cancelada',
+        description: 'O agendamento foi removido.',
+      });
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível cancelar o agendamento.',
+        variant: 'destructive',
       });
     }
   };
@@ -340,11 +412,11 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
 
             <button
               onClick={handleAddAppointment}
-              disabled={!newAppointment.patientId || !newAppointment.date}
+              disabled={!newAppointment.patientId || !newAppointment.date || isSaving}
               className="btn-primary w-full mt-6 disabled:opacity-50"
               style={{ background: palette.hex }}
             >
-              Confirmar Horário
+              {isSaving ? 'Salvando...' : 'Confirmar Horário'}
             </button>
           </div>
         </div>

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Patient, PrimaryColor, SessionNote } from '../../types/psicodoc';
+import { Patient, PrimaryColor } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
+import { usePatients } from '@/hooks/usePatients';
 
 interface PatientsViewProps {
   patients: Patient[];
@@ -19,7 +20,8 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
   const palette = COLOR_PALETTES[primaryColor];
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newPatient, setNewPatient] = useState({ name: '', responsibleName: '', responsiblePhone: '' });
+  const [newPatient, setNewPatient] = useState({ name: '', responsibleName: '', responsiblePhone: '', birthDate: '' });
+  const { addPatient, isLoading } = usePatients(patients, setPatients);
 
   const filteredPatients = useMemo(() => {
     if (!search.trim()) return patients;
@@ -28,22 +30,20 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
     );
   }, [patients, search]);
 
-  const handleAddPatient = () => {
+  const handleAddPatient = async () => {
     if (!newPatient.name.trim()) return;
     
-    const patient: Patient = {
-      id: Date.now().toString(),
-      name: newPatient.name,
-      responsibleName: newPatient.responsibleName,
-      birthDate: '',
-      responsiblePhone: newPatient.responsiblePhone,
-      files: [],
-      notes: [],
-    };
-    
-    setPatients(prev => [patient, ...prev]);
-    setNewPatient({ name: '', responsibleName: '', responsiblePhone: '' });
-    setIsModalOpen(false);
+    const result = await addPatient({
+      name: newPatient.name.trim(),
+      responsibleName: newPatient.responsibleName.trim() || undefined,
+      responsiblePhone: newPatient.responsiblePhone.trim() || undefined,
+      birthDate: newPatient.birthDate || undefined,
+    });
+
+    if (result) {
+      setNewPatient({ name: '', responsibleName: '', responsiblePhone: '', birthDate: '' });
+      setIsModalOpen(false);
+    }
   };
 
   return (
@@ -117,8 +117,9 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
 
       {/* Add Patient Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
-          <div className="bg-card rounded-t-3xl md:rounded-3xl w-full max-w-md p-6 animate-slide-up">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4" onClick={() => setIsModalOpen(false)}>
+          <div className="bg-card rounded-t-3xl md:rounded-3xl w-full max-w-md p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mb-4 md:hidden" />
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-black">Novo Paciente</h3>
               <button 
@@ -140,7 +141,20 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                   onChange={(e) => setNewPatient(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Nome completo"
                   className="input-field"
+                  maxLength={200}
                   autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">
+                  Data de Nascimento
+                </label>
+                <input
+                  type="date"
+                  value={newPatient.birthDate}
+                  onChange={(e) => setNewPatient(prev => ({ ...prev, birthDate: e.target.value }))}
+                  className="input-field"
                 />
               </div>
 
@@ -154,6 +168,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                   onChange={(e) => setNewPatient(prev => ({ ...prev, responsibleName: e.target.value }))}
                   placeholder="Nome do responsável"
                   className="input-field"
+                  maxLength={200}
                 />
               </div>
 
@@ -167,17 +182,18 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                   onChange={(e) => setNewPatient(prev => ({ ...prev, responsiblePhone: e.target.value }))}
                   placeholder="(00) 00000-0000"
                   className="input-field"
+                  maxLength={20}
                 />
               </div>
             </div>
 
             <button
               onClick={handleAddPatient}
-              disabled={!newPatient.name.trim()}
+              disabled={!newPatient.name.trim() || isLoading}
               className="btn-primary w-full mt-6 disabled:opacity-50"
               style={{ background: palette.hex }}
             >
-              Adicionar Paciente
+              {isLoading ? 'Salvando...' : 'Adicionar Paciente'}
             </button>
           </div>
         </div>
