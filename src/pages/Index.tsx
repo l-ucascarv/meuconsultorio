@@ -145,7 +145,7 @@ const Index: React.FC = () => {
               <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
                 <img 
                   src="/images/screenshot-document.png" 
-                  alt="Tela de criação de documentos psicológicos com IA no PsicoDoc AI" 
+                  alt="Tela de criação de documentos psicológicos com IA no Meu Consultório" 
                   className="w-full h-auto"
                   loading="lazy"
                 />
