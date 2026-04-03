@@ -308,7 +308,7 @@ const Index: React.FC = () => {
             Comece a usar hoje
           </h2>
           <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">
-            Experimente gratuitamente por 7 dias. Sem compromisso, cancele quando quiser.
+            Faça seu teste gratuito de 7 dias e aproveite o nosso sistema. 
           </p>
           <button
             onClick={() => navigate('/auth')}
