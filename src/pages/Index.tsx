@@ -119,7 +119,7 @@ const Index: React.FC = () => {
           Conheça o Sistema
         </h2>
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-          Veja como o PsicoDoc AI simplifica sua rotina com ferramentas intuitivas e poderosas
+          Veja como o nosso sistema simplifica sua rotina com ferramentas intuitivas e poderosas
         </p>
 
         <div className="space-y-16">
