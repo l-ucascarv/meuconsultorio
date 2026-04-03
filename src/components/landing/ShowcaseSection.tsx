@@ -82,13 +82,13 @@ const ShowcaseSection: React.FC = () => {
               Acompanhe suas finanças em tempo real
             </h3>
             <div className="space-y-4">
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-800">
+              <div className="p-4 bg-accent rounded-2xl border border-border">
                 <p className="text-sm text-muted-foreground mb-1">Receitas do mês</p>
-                <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">R$ 8.450,00</p>
+                <p className="text-2xl font-black text-primary">R$ 8.450,00</p>
               </div>
-              <div className="p-4 bg-red-50 dark:bg-red-950/30 rounded-2xl border border-red-200 dark:border-red-800">
+              <div className="p-4 bg-accent rounded-2xl border border-border">
                 <p className="text-sm text-muted-foreground mb-1">Despesas do mês</p>
-                <p className="text-2xl font-black text-red-600 dark:text-red-400">R$ 1.230,00</p>
+                <p className="text-2xl font-black text-destructive">R$ 1.230,00</p>
               </div>
               <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20">
                 <p className="text-sm text-muted-foreground mb-1">Saldo líquido</p>
