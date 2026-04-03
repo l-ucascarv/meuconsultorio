@@ -46,7 +46,7 @@ const Index: React.FC = () => {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Conforme Resolução CFP 06/2019
+          DOCUMENTOS COM O PADRÃO DO CONSELHO FEDERAL DE PSICOLOGIA
         </div>
         <h1 className="text-4xl md:text-6xl font-black text-foreground mb-6 leading-tight">
           Documentos Psicológicos<br />
