@@ -30,7 +30,7 @@ const Index: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <span className="text-xl font-black text-foreground">PsicoDoc AI</span>
+          <span className="text-xl font-black text-foreground">Meu Consultório</span>
         </div>
         <button
           onClick={() => navigate('/auth')}
@@ -46,7 +46,7 @@ const Index: React.FC = () => {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Conforme Resolução CFP 06/2019
+          DOCUMENTOS COM O PADRÃO DO CONSELHO FEDERAL DE PSICOLOGIA
         </div>
         <h1 className="text-4xl md:text-6xl font-black text-foreground mb-6 leading-tight">
           Documentos Psicológicos<br />
@@ -119,7 +119,7 @@ const Index: React.FC = () => {
           Conheça o Sistema
         </h2>
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-          Veja como o PsicoDoc AI simplifica sua rotina com ferramentas intuitivas e poderosas
+          Veja como o nosso sistema simplifica sua rotina com ferramentas intuitivas e poderosas
         </p>
 
         <div className="space-y-16">
@@ -145,7 +145,7 @@ const Index: React.FC = () => {
               <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
                 <img 
                   src="/images/screenshot-document.png" 
-                  alt="Tela de criação de documentos psicológicos com IA no PsicoDoc AI" 
+                  alt="Tela de criação de documentos psicológicos com IA no Meu Consultório" 
                   className="w-full h-auto"
                   loading="lazy"
                 />
@@ -159,7 +159,7 @@ const Index: React.FC = () => {
               <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
                 <img 
                   src="/images/screenshot-financial.png" 
-                  alt="Dashboard de gestão financeira para psicólogos no PsicoDoc AI" 
+                  alt="Dashboard de gestão financeira para psicólogos no Meu Consultório" 
                   className="w-full h-auto"
                   loading="lazy"
                 />
@@ -205,7 +205,7 @@ const Index: React.FC = () => {
               <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
                 <img 
                   src="/images/screenshot-patients.png" 
-                  alt="Tela de gestão de pacientes no PsicoDoc AI" 
+                  alt="Tela de gestão de pacientes no Meu Consultório" 
                   className="w-full h-auto"
                   loading="lazy"
                 />
@@ -308,7 +308,7 @@ const Index: React.FC = () => {
             Comece a usar hoje
           </h2>
           <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">
-            Experimente gratuitamente por 7 dias. Sem compromisso, cancele quando quiser.
+            Faça seu teste gratuito de 7 dias e aproveite o nosso sistema. 
           </p>
           <button
             onClick={() => navigate('/auth')}
@@ -328,10 +328,10 @@ const Index: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <span className="font-bold text-foreground">PsicoDoc AI</span>
+            <span className="font-bold text-foreground">Meu Consultório</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2025 PsicoDoc AI. Todos os direitos reservados.
+            © 2025 Meu Consultório. Todos os direitos reservados.
           </p>
         </div>
       </footer>
