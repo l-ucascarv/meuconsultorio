@@ -159,7 +159,7 @@ const Index: React.FC = () => {
               <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
                 <img 
                   src="/images/screenshot-financial.png" 
-                  alt="Dashboard de gestão financeira para psicólogos no PsicoDoc AI" 
+                  alt="Dashboard de gestão financeira para psicólogos no Meu Consultório" 
                   className="w-full h-auto"
                   loading="lazy"
                 />
