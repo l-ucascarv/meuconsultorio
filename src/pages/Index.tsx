@@ -205,7 +205,7 @@ const Index: React.FC = () => {
               <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
                 <img 
                   src="/images/screenshot-patients.png" 
-                  alt="Tela de gestão de pacientes no PsicoDoc AI" 
+                  alt="Tela de gestão de pacientes no Meu Consultório" 
                   className="w-full h-auto"
                   loading="lazy"
                 />
