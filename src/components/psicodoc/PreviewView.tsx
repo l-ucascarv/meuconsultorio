@@ -157,7 +157,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-4 page-enter">
+    <div className="max-w-4xl mx-auto py-4 page-enter overflow-x-hidden">
       {/* Action Bar */}
       <div className="no-print flex items-center justify-between gap-4 mb-6 px-2">
         <button 
