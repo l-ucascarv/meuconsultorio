@@ -213,7 +213,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
           <h1 className="text-xl md:text-2xl font-black uppercase tracking-wide mb-2">
             {generatedDoc.title || DOC_DEFINITIONS[reportData.type].label}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground print-hidden-subtitle">
             Documento gerado em conformidade com a Resolução CFP Nº 06/2019
           </p>
         </div>
