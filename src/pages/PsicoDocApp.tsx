@@ -24,6 +24,7 @@ import {
   FinancialCategory,
   FinancialTransaction,
   AvailabilitySettingsView,
+  AnamnesisView,
 } from '../components/psicodoc';
 import { useAuth } from '@/hooks/useAuth';
 import { ChangePasswordModal } from '@/components/psicodoc/ChangePasswordModal';
@@ -336,6 +337,59 @@ const PsicoDocApp: React.FC = () => {
 
       if (error) throw error;
 
+      // Auto-save document to patient folder if linked to a patient
+      if (reportData.patientId) {
+        const docLabel = reportData.type === 'relatorio' ? 'Relatório' :
+                         reportData.type === 'atestado' ? 'Atestado' :
+                         reportData.type === 'laudo' ? 'Laudo' :
+                         reportData.type === 'parecer' ? 'Parecer' : 'Declaração';
+        
+        const textContent = [
+          generatedDoc.title || docLabel,
+          '',
+          '1. IDENTIFICAÇÃO',
+          generatedDoc.identification,
+          generatedDoc.demand ? `\n2. DEMANDA\n${generatedDoc.demand}` : '',
+          generatedDoc.procedure ? `\n3. PROCEDIMENTO\n${generatedDoc.procedure}` : '',
+          generatedDoc.analysis ? `\n4. ANÁLISE\n${generatedDoc.analysis}` : '',
+          `\nCONCLUSÃO\n${generatedDoc.conclusion}`,
+          '',
+          `${reportData.city}, ${new Date(reportData.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+          psychoInfo.name,
+          psychoInfo.crp ? `CRP: ${psychoInfo.crp}` : '',
+        ].filter(Boolean).join('\n');
+
+        await supabase.from('patient_files').insert({
+          patient_id: reportData.patientId,
+          user_id: user.id,
+          name: `${docLabel} - ${reportData.patientName} - ${new Date().toLocaleDateString('pt-BR')}`,
+          file_type: 'document',
+          file_size: `${(textContent.length / 1024).toFixed(1)} KB`,
+          content: textContent,
+        });
+
+        // Update local patient files list
+        setPatients(prev => prev.map(p => {
+          if (p.id === reportData.patientId) {
+            return {
+              ...p,
+              files: [
+                {
+                  id: Date.now().toString(),
+                  name: `${docLabel} - ${reportData.patientName} - ${new Date().toLocaleDateString('pt-BR')}`,
+                  type: 'document',
+                  size: `${(textContent.length / 1024).toFixed(1)} KB`,
+                  date: new Date().toISOString(),
+                  content: textContent,
+                },
+                ...(p.files || []),
+              ],
+            };
+          }
+          return p;
+        }));
+      }
+
       const newReport: ReportData = {
         id: data.id,
         patientId: data.patient_id || undefined,
@@ -362,7 +416,9 @@ const PsicoDocApp: React.FC = () => {
 
       toast({
         title: 'Documento salvo!',
-        description: 'O documento foi salvo no histórico.',
+        description: reportData.patientId 
+          ? 'O documento foi salvo no histórico e na pasta do paciente.' 
+          : 'O documento foi salvo no histórico.',
       });
     } catch (error) {
       console.error('Error saving report:', error);
@@ -511,6 +567,9 @@ const PsicoDocApp: React.FC = () => {
             primaryColor={psychoInfo.primaryColor}
             onBack={() => setView('patients')}
             onCreateDocument={handleCreateDocumentForPatient}
+            onCreateAnamnesis={() => {
+              setView('anamnesis');
+            }}
           />
         )}
 
@@ -538,6 +597,15 @@ const PsicoDocApp: React.FC = () => {
           <AvailabilitySettingsView
             primaryColor={psychoInfo.primaryColor}
             slug={psychoInfo.slug}
+          />
+        )}
+
+        {view === 'anamnesis' && (
+          <AnamnesisView
+            patients={patients}
+            primaryColor={psychoInfo.primaryColor}
+            onBack={() => setView('patients')}
+            selectedPatientId={selectedPatient?.id}
           />
         )}
 

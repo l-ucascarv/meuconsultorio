@@ -13,3 +13,4 @@ export * from './LoadingOverlay';
 export * from './FinancialView';
 export * from './AvailabilitySettingsView';
 export * from './AppointmentDetailDrawer';
+export * from './AnamnesisView';

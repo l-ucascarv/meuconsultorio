@@ -11,6 +11,7 @@ interface BottomNavProps {
 
 const moreItems: { id: AppView; label: string; icon: React.ReactNode }[] = [
   { id: 'history', label: 'Histórico', icon: <Icons.History /> },
+  { id: 'anamnesis', label: 'Anamnese', icon: <Icons.ClipboardList /> },
   { id: 'availability', label: 'Agendamento Online', icon: <Icons.Share /> },
   { id: 'financial', label: 'Financeiro', icon: <Icons.Wallet /> },
 ];

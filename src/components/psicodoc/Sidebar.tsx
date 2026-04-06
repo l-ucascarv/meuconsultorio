@@ -22,6 +22,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'home', label: 'Início', icon: <Icons.Home /> },
   { id: 'create', label: 'Novo Documento', icon: <Icons.FileText /> },
+  { id: 'anamnesis', label: 'Anamnese', icon: <Icons.ClipboardList /> },
   { id: 'history', label: 'Histórico', icon: <Icons.History /> },
   { id: 'patients', label: 'Pacientes', icon: <Icons.Users /> },
   { id: 'agenda', label: 'Agenda', icon: <Icons.Calendar /> },

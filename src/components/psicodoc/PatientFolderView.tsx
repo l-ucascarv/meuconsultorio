@@ -14,6 +14,7 @@ interface PatientFolderViewProps {
   primaryColor: PrimaryColor;
   onBack: () => void;
   onCreateDocument: () => void;
+  onCreateAnamnesis?: () => void;
 }
 
 export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
@@ -23,6 +24,7 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
   primaryColor,
   onBack,
   onCreateDocument,
+  onCreateAnamnesis,
 }) => {
   const palette = COLOR_PALETTES[primaryColor];
   const { user } = useAuth();
@@ -192,9 +194,20 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
           onClick={onCreateDocument}
           className="p-3 rounded-xl text-white active-touch"
           style={{ background: palette.hex }}
+          title="Novo Documento"
         >
           <Icons.FileText />
         </button>
+        {onCreateAnamnesis && (
+          <button
+            onClick={onCreateAnamnesis}
+            className="p-3 rounded-xl text-white active-touch"
+            style={{ background: palette.hex }}
+            title="Nova Anamnese"
+          >
+            <Icons.ClipboardList />
+          </button>
+        )}
       </header>
 
       {/* Patient Info Card */}
