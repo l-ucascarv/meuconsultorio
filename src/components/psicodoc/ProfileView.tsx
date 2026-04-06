@@ -85,14 +85,40 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      setPsychoInfo(prev => ({ ...prev })); // triggers save via handleSetPsychoInfo
+      toast({
+        title: 'Perfil salvo!',
+        description: 'Suas informações foram atualizadas com sucesso.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 py-4 page-enter">
       {/* Header */}
-      <header className="px-2">
-        <h2 className="text-2xl md:text-3xl font-black">Perfil</h2>
-        <p className="text-muted-foreground text-sm mt-1">
-          Configure suas informações profissionais
-        </p>
+      <header className="flex items-center justify-between px-2">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-black">Perfil</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            Configure suas informações profissionais
+          </p>
+        </div>
+        <button
+          onClick={handleSaveProfile}
+          disabled={isSaving}
+          className="px-5 py-2.5 text-white rounded-xl font-bold text-sm disabled:opacity-50"
+          style={{ background: palette.hex }}
+        >
+          {isSaving ? 'Salvando...' : 'Salvar Perfil'}
+        </button>
       </header>
 
       {/* Profile Form */}

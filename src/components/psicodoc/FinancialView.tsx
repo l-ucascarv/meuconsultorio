@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, addMonths, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PrimaryColor } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
@@ -13,8 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { TrendingUp, TrendingDown, Wallet, Plus, Tag, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, TrendingDown, Wallet, Plus, Tag, ArrowUpCircle, ArrowDownCircle, FileText } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 
 export interface FinancialCategory {
   id: string;
@@ -150,6 +150,64 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
       expense: Object.entries(expenseByCategory).map(([name, value]) => ({ name, value })),
     };
   }, [monthTransactions, categories]);
+
+  // DRE (Monthly P&L) data
+  const dreData = useMemo(() => {
+    const yearStart = startOfYear(currentMonth);
+    const yearEnd = endOfYear(currentMonth);
+    const months = eachMonthOfInterval({ start: yearStart, end: yearEnd });
+
+    let accumulated = 0;
+    return months.map(month => {
+      const ms = startOfMonth(month);
+      const me = endOfMonth(month);
+      const monthTx = transactions.filter(t => {
+        const d = new Date(t.transactionDate);
+        return d >= ms && d <= me;
+      });
+
+      const income = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const expense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const net = income - expense;
+      accumulated += net;
+
+      // Breakdown by category
+      const incomeByCategory: Record<string, number> = {};
+      const expenseByCategory: Record<string, number> = {};
+      monthTx.forEach(t => {
+        const cat = categories.find(c => c.id === t.categoryId);
+        const catName = cat?.name || 'Sem categoria';
+        if (t.type === 'income') {
+          incomeByCategory[catName] = (incomeByCategory[catName] || 0) + t.amount;
+        } else {
+          expenseByCategory[catName] = (expenseByCategory[catName] || 0) + t.amount;
+        }
+      });
+
+      return {
+        month: format(month, 'MMM', { locale: ptBR }),
+        monthFull: format(month, 'MMMM', { locale: ptBR }),
+        income,
+        expense,
+        net,
+        accumulated,
+        margin: income > 0 ? ((net / income) * 100).toFixed(1) : '0.0',
+        incomeByCategory,
+        expenseByCategory,
+        isPast: month <= new Date(),
+      };
+    });
+  }, [transactions, currentMonth, categories]);
+
+  // Revenue projection (average of last 3 months with data)
+  const projection = useMemo(() => {
+    const monthsWithData = dreData.filter(d => d.isPast && (d.income > 0 || d.expense > 0));
+    const last3 = monthsWithData.slice(-3);
+    if (last3.length === 0) return { avgIncome: 0, avgExpense: 0, avgNet: 0 };
+    const avgIncome = last3.reduce((s, d) => s + d.income, 0) / last3.length;
+    const avgExpense = last3.reduce((s, d) => s + d.expense, 0) / last3.length;
+    return { avgIncome, avgExpense, avgNet: avgIncome - avgExpense };
+  }, [dreData]);
 
   const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -376,8 +434,9 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="dre">DRE</TabsTrigger>
           <TabsTrigger value="transactions">Transações</TabsTrigger>
           <TabsTrigger value="categories">Categorias</TabsTrigger>
         </TabsList>
@@ -476,6 +535,109 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
                 <p className="text-muted-foreground text-center py-8">Sem despesas neste mês</p>
               )}
             </div>
+          </div>
+        </TabsContent>
+
+        {/* DRE Tab */}
+        <TabsContent value="dre" className="space-y-6 mt-6">
+          {/* Projection Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="card-elevated p-5">
+              <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1">Projeção Receita/mês</p>
+              <p className="text-xl font-black text-emerald-500">{formatCurrency(projection.avgIncome)}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Média dos últimos 3 meses</p>
+            </div>
+            <div className="card-elevated p-5">
+              <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1">Projeção Despesa/mês</p>
+              <p className="text-xl font-black text-rose-500">{formatCurrency(projection.avgExpense)}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Média dos últimos 3 meses</p>
+            </div>
+            <div className="card-elevated p-5">
+              <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1">Resultado Projetado</p>
+              <p className="text-xl font-black" style={{ color: projection.avgNet >= 0 ? '#22c55e' : '#ef4444' }}>
+                {formatCurrency(projection.avgNet)}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1">Lucro líquido estimado</p>
+            </div>
+          </div>
+
+          {/* DRE Chart */}
+          <div className="card-elevated p-6">
+            <h3 className="font-bold mb-4">Fluxo de Caixa Mensal — {format(currentMonth, 'yyyy')}</h3>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dreData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
+                  <YAxis stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip 
+                    formatter={(value: number) => formatCurrency(value)}
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="income" name="Receitas" fill="#22c55e" radius={[4,4,0,0]} />
+                  <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[4,4,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* DRE Table */}
+          <div className="card-elevated overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left p-3 font-black text-xs uppercase tracking-wider text-muted-foreground">Mês</th>
+                  <th className="text-right p-3 font-black text-xs uppercase tracking-wider text-emerald-500">Receitas</th>
+                  <th className="text-right p-3 font-black text-xs uppercase tracking-wider text-rose-500">Despesas</th>
+                  <th className="text-right p-3 font-black text-xs uppercase tracking-wider text-muted-foreground">Resultado</th>
+                  <th className="text-right p-3 font-black text-xs uppercase tracking-wider text-muted-foreground">Margem</th>
+                  <th className="text-right p-3 font-black text-xs uppercase tracking-wider text-muted-foreground">Acumulado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dreData.map((row, i) => (
+                  <tr key={i} className={`border-b border-border/50 ${!row.isPast ? 'opacity-40' : ''}`}>
+                    <td className="p-3 font-bold capitalize">{row.monthFull}</td>
+                    <td className="p-3 text-right text-emerald-500 font-medium">{formatCurrency(row.income)}</td>
+                    <td className="p-3 text-right text-rose-500 font-medium">{formatCurrency(row.expense)}</td>
+                    <td className="p-3 text-right font-bold" style={{ color: row.net >= 0 ? '#22c55e' : '#ef4444' }}>
+                      {formatCurrency(row.net)}
+                    </td>
+                    <td className="p-3 text-right text-muted-foreground">{row.margin}%</td>
+                    <td className="p-3 text-right font-bold" style={{ color: row.accumulated >= 0 ? '#22c55e' : '#ef4444' }}>
+                      {formatCurrency(row.accumulated)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-border font-black">
+                  <td className="p-3">TOTAL</td>
+                  <td className="p-3 text-right text-emerald-500">
+                    {formatCurrency(dreData.reduce((s, d) => s + (d.isPast ? d.income : 0), 0))}
+                  </td>
+                  <td className="p-3 text-right text-rose-500">
+                    {formatCurrency(dreData.reduce((s, d) => s + (d.isPast ? d.expense : 0), 0))}
+                  </td>
+                  <td className="p-3 text-right" style={{ 
+                    color: dreData.reduce((s, d) => s + (d.isPast ? d.net : 0), 0) >= 0 ? '#22c55e' : '#ef4444' 
+                  }}>
+                    {formatCurrency(dreData.reduce((s, d) => s + (d.isPast ? d.net : 0), 0))}
+                  </td>
+                  <td className="p-3 text-right text-muted-foreground">—</td>
+                  <td className="p-3 text-right" style={{ 
+                    color: (dreData.filter(d => d.isPast).pop()?.accumulated || 0) >= 0 ? '#22c55e' : '#ef4444' 
+                  }}>
+                    {formatCurrency(dreData.filter(d => d.isPast).pop()?.accumulated || 0)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </TabsContent>
 
