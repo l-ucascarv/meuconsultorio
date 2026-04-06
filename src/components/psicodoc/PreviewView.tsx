@@ -70,7 +70,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
 </head>
 <body>
   <h1>${generatedDoc.title || DOC_DEFINITIONS[reportData.type].label}</h1>
-  <p class="subtitle">Documento gerado em conformidade com a Resolução CFP Nº 06/2019</p>
+  
   
   <h2>1. Identificação</h2>
   <div class="content">${generatedDoc.identification}</div>
