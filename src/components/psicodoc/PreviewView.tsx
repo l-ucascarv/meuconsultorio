@@ -387,8 +387,8 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
 
       {/* Share Modal */}
       {showShareModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
-          <div className="bg-card rounded-t-3xl md:rounded-3xl w-full max-w-md p-6 animate-slide-up">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4 pb-20 md:pb-4">
+          <div className="bg-card rounded-t-3xl md:rounded-3xl w-full max-w-md p-6 animate-slide-up max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-black">Compartilhar</h3>
               <button 
