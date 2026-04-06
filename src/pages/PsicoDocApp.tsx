@@ -24,6 +24,7 @@ import {
   FinancialCategory,
   FinancialTransaction,
   AvailabilitySettingsView,
+  AnamnesisView,
 } from '../components/psicodoc';
 import { useAuth } from '@/hooks/useAuth';
 import { ChangePasswordModal } from '@/components/psicodoc/ChangePasswordModal';
