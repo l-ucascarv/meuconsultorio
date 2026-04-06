@@ -597,6 +597,15 @@ const PsicoDocApp: React.FC = () => {
           />
         )}
 
+        {view === 'anamnesis' && (
+          <AnamnesisView
+            patients={patients}
+            primaryColor={psychoInfo.primaryColor}
+            onBack={() => setView('patients')}
+            selectedPatientId={selectedPatient?.id}
+          />
+        )}
+
         {view === 'profile' && (
           <ProfileView
             psychoInfo={psychoInfo}
