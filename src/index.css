@@ -105,6 +105,13 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
   }
 }
 
@@ -153,7 +160,9 @@
   }
 
   .input-field {
-    @apply w-full p-4 bg-muted rounded-xl font-semibold outline-none transition-all duration-200 focus:ring-2 focus:ring-primary/30;
+    @apply w-full bg-muted rounded-xl font-semibold outline-none transition-all duration-200 focus:ring-2 focus:ring-primary/30;
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
   }
 
   .card-elevated {
@@ -161,7 +170,22 @@
   }
 
   .btn-primary {
-    @apply text-white p-4 rounded-xl font-black text-lg shadow-xl active-touch transition-all;
+    @apply text-white rounded-xl font-black shadow-xl active-touch transition-all;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+}
+
+@media (min-width: 768px) {
+  .input-field {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .btn-primary {
+    padding: 1rem;
+    font-size: 1.125rem;
   }
 }
 

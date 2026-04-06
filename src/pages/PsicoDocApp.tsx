@@ -496,7 +496,7 @@ const PsicoDocApp: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-300 ${themeClass}`}>
+    <div className={`min-h-screen w-full overflow-x-hidden flex flex-col md:flex-row transition-colors duration-300 ${themeClass}`}>
       {/* Change Password Modal */}
       <ChangePasswordModal isOpen={mustChangePassword} />
 
@@ -509,7 +509,7 @@ const PsicoDocApp: React.FC = () => {
       />
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 pb-20 md:pb-6 px-4 md:px-8">
+      <main className="flex-1 min-w-0 w-full overflow-x-hidden md:ml-64 pb-20 md:pb-6 px-3 md:px-8">
         {view === 'home' && (
           <HomeView
             psychoInfo={psychoInfo}

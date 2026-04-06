@@ -47,12 +47,12 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 py-4 page-enter">
+    <div className="max-w-4xl mx-auto space-y-6 py-4 page-enter overflow-x-hidden">
       {/* Header */}
-      <header className="flex flex-wrap justify-between items-center gap-3 px-2">
-        <h2 className="text-2xl md:text-3xl font-black">Pacientes</h2>
-        <div className="flex items-center gap-3 flex-1 md:flex-none">
-          <div className="relative flex-1 md:w-64">
+      <header className="flex flex-col gap-3 px-1 md:px-2 md:flex-row md:items-center md:justify-between">
+        <h2 className="text-xl md:text-3xl font-black">Pacientes</h2>
+        <div className="flex w-full items-center gap-2 md:w-auto md:flex-none md:gap-3">
+          <div className="relative flex-1 min-w-0 md:w-64">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
               <Icons.Search />
             </div>
@@ -66,7 +66,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="p-3 text-white rounded-xl shadow-lg active-touch shrink-0"
+            className="p-2.5 md:p-3 text-white rounded-xl shadow-lg active-touch shrink-0"
             style={{ background: palette.hex }}
           >
             <Icons.PlusCircle />
@@ -75,7 +75,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
       </header>
 
       {/* Patients Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 px-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 px-1">
         {filteredPatients.length > 0 ? (
           filteredPatients.map(patient => (
             <button
@@ -117,11 +117,11 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
 
       {/* Add Patient Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4" onClick={() => setIsModalOpen(false)}>
-          <div className="bg-card rounded-t-3xl md:rounded-3xl w-full max-w-md p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-end md:items-center justify-center p-3 md:p-4" onClick={() => setIsModalOpen(false)}>
+          <div className="bg-card rounded-t-3xl md:rounded-3xl w-full max-w-md max-h-[90dvh] overflow-y-auto p-5 pb-[calc(6rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6 animate-slide-up" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mb-4 md:hidden" />
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-black">Novo Paciente</h3>
+              <h3 className="text-lg md:text-xl font-black">Novo Paciente</h3>
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="p-2 rounded-full hover:bg-muted"
@@ -190,7 +190,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
             <button
               onClick={handleAddPatient}
               disabled={!newPatient.name.trim() || isLoading}
-              className="btn-primary w-full mt-6 disabled:opacity-50"
+              className="btn-primary w-full mt-6 text-base md:text-lg disabled:opacity-50"
               style={{ background: palette.hex }}
             >
               {isLoading ? 'Salvando...' : 'Adicionar Paciente'}

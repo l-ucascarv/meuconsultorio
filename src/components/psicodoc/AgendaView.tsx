@@ -187,17 +187,17 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
     : null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 md:space-y-6 py-2 md:py-4 page-enter">
+    <div className="max-w-4xl mx-auto space-y-4 md:space-y-6 py-2 md:py-4 page-enter overflow-x-hidden">
       {/* Header */}
-      <header className="flex justify-between items-center gap-3 px-1 md:px-2">
+      <header className="flex flex-col gap-3 px-1 md:px-2 md:flex-row md:items-center md:justify-between">
         <h2 className="text-xl md:text-3xl font-black">Agenda</h2>
-        <div className="flex items-center gap-1.5 md:gap-2">
+        <div className="flex w-full items-center justify-between gap-2 md:w-auto md:justify-end md:gap-2">
           <button
             onClick={() => {
               setNewAppointment(prev => ({ ...prev, date: new Date().toISOString().split('T')[0] }));
               setIsModalOpen(true);
             }}
-            className="p-2.5 md:p-3 text-white rounded-xl shadow-lg active:scale-95 transition-transform flex items-center gap-2"
+            className="flex-1 md:flex-none p-2.5 md:p-3 text-white rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
             style={{ background: palette.hex }}
           >
             <Icons.PlusCircle />
@@ -232,7 +232,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
 
       {/* Month/Year */}
       <div className="text-center">
-        <h3 className="text-lg md:text-xl font-black">
+        <h3 className="text-base md:text-xl font-black leading-tight">
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h3>
       </div>
@@ -285,8 +285,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
       {/* Selected Day Appointments */}
       {selectedDay && (
         <div className="card-elevated p-3 md:p-4 animate-fade-in">
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <h4 className="font-black text-sm md:text-base">
+          <div className="flex flex-col items-start gap-2 mb-3 md:mb-4 md:flex-row md:items-center md:justify-between">
+            <h4 className="font-black text-sm md:text-base break-words">
               {new Date(selectedDay.date + 'T12:00:00').toLocaleDateString('pt-BR', {
                 weekday: 'long',
                 day: 'numeric',
@@ -353,11 +353,11 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
 
       {/* Add Appointment Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-0 md:p-4" onClick={() => setIsModalOpen(false)}>
-          <div className="bg-card rounded-t-3xl md:rounded-3xl w-full max-w-md p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-end md:items-center justify-center p-0 md:p-4" onClick={() => setIsModalOpen(false)}>
+          <div className="bg-card rounded-t-3xl md:rounded-3xl w-full max-w-md max-h-[90dvh] overflow-y-auto p-5 pb-[calc(6rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6 animate-slide-up" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mb-4 md:hidden" />
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-black">Novo Agendamento</h3>
+              <h3 className="text-lg md:text-xl font-black">Novo Agendamento</h3>
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="p-2 rounded-full hover:bg-muted"
@@ -413,7 +413,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
             <button
               onClick={handleAddAppointment}
               disabled={!newAppointment.patientId || !newAppointment.date || isSaving}
-              className="btn-primary w-full mt-6 disabled:opacity-50"
+              className="btn-primary w-full mt-6 text-base md:text-lg disabled:opacity-50"
               style={{ background: palette.hex }}
             >
               {isSaving ? 'Salvando...' : 'Confirmar Horário'}
