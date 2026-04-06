@@ -434,8 +434,9 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="dre">DRE</TabsTrigger>
           <TabsTrigger value="transactions">Transações</TabsTrigger>
           <TabsTrigger value="categories">Categorias</TabsTrigger>
         </TabsList>
