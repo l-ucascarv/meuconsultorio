@@ -76,7 +76,57 @@ export interface GeneratedReport {
   conclusion: string;
 }
 
-export type AppView = 'home' | 'create' | 'preview' | 'history' | 'profile' | 'agenda' | 'patients' | 'patient_folder' | 'financial' | 'availability';
+export type AppView = 'home' | 'create' | 'preview' | 'history' | 'profile' | 'agenda' | 'patients' | 'patient_folder' | 'financial' | 'availability' | 'anamnesis';
+
+export interface AnamnesisData {
+  id?: string;
+  patientId: string;
+  patientName: string;
+  // Dados Pessoais
+  birthDate: string;
+  age: string;
+  gender: string;
+  maritalStatus: string;
+  education: string;
+  occupation: string;
+  address: string;
+  phone: string;
+  email: string;
+  // Dados do Responsável (se menor)
+  responsibleName: string;
+  responsibleRelation: string;
+  responsiblePhone: string;
+  // Motivo da Consulta
+  mainComplaint: string;
+  referralSource: string;
+  previousTreatment: string;
+  currentMedications: string;
+  // Histórico de Saúde
+  healthHistory: string;
+  psychiatricHistory: string;
+  familyHealthHistory: string;
+  substanceUse: string;
+  sleepPattern: string;
+  feedingHabits: string;
+  // Histórico de Desenvolvimento
+  pregnancyNotes: string;
+  developmentMilestones: string;
+  schoolHistory: string;
+  // Dinâmica Familiar
+  familyComposition: string;
+  familyRelationships: string;
+  socialRelationships: string;
+  // Aspectos Emocionais
+  emotionalState: string;
+  copingStrategies: string;
+  selfPerception: string;
+  // Observações
+  behavioralObservations: string;
+  additionalNotes: string;
+  // Hipótese Diagnóstica Inicial
+  initialHypothesis: string;
+  therapeuticPlan: string;
+}
 
 export interface CalendarDay {
   day: number;
