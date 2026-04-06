@@ -641,6 +641,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
           </div>
         </TabsContent>
 
+        <TabsContent value="transactions" className="mt-6">
           <div className="card-elevated">
             {monthTransactions.length === 0 ? (
               <div className="p-12 text-center">
