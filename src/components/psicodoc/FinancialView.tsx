@@ -151,6 +151,64 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
     };
   }, [monthTransactions, categories]);
 
+  // DRE (Monthly P&L) data
+  const dreData = useMemo(() => {
+    const yearStart = startOfYear(currentMonth);
+    const yearEnd = endOfYear(currentMonth);
+    const months = eachMonthOfInterval({ start: yearStart, end: yearEnd });
+
+    let accumulated = 0;
+    return months.map(month => {
+      const ms = startOfMonth(month);
+      const me = endOfMonth(month);
+      const monthTx = transactions.filter(t => {
+        const d = new Date(t.transactionDate);
+        return d >= ms && d <= me;
+      });
+
+      const income = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const expense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const net = income - expense;
+      accumulated += net;
+
+      // Breakdown by category
+      const incomeByCategory: Record<string, number> = {};
+      const expenseByCategory: Record<string, number> = {};
+      monthTx.forEach(t => {
+        const cat = categories.find(c => c.id === t.categoryId);
+        const catName = cat?.name || 'Sem categoria';
+        if (t.type === 'income') {
+          incomeByCategory[catName] = (incomeByCategory[catName] || 0) + t.amount;
+        } else {
+          expenseByCategory[catName] = (expenseByCategory[catName] || 0) + t.amount;
+        }
+      });
+
+      return {
+        month: format(month, 'MMM', { locale: ptBR }),
+        monthFull: format(month, 'MMMM', { locale: ptBR }),
+        income,
+        expense,
+        net,
+        accumulated,
+        margin: income > 0 ? ((net / income) * 100).toFixed(1) : '0.0',
+        incomeByCategory,
+        expenseByCategory,
+        isPast: month <= new Date(),
+      };
+    });
+  }, [transactions, currentMonth, categories]);
+
+  // Revenue projection (average of last 3 months with data)
+  const projection = useMemo(() => {
+    const monthsWithData = dreData.filter(d => d.isPast && (d.income > 0 || d.expense > 0));
+    const last3 = monthsWithData.slice(-3);
+    if (last3.length === 0) return { avgIncome: 0, avgExpense: 0, avgNet: 0 };
+    const avgIncome = last3.reduce((s, d) => s + d.income, 0) / last3.length;
+    const avgExpense = last3.reduce((s, d) => s + d.expense, 0) / last3.length;
+    return { avgIncome, avgExpense, avgNet: avgIncome - avgExpense };
+  }, [dreData]);
+
   const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   const handleAddTransaction = async () => {
