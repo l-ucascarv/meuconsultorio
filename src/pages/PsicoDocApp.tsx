@@ -567,6 +567,9 @@ const PsicoDocApp: React.FC = () => {
             primaryColor={psychoInfo.primaryColor}
             onBack={() => setView('patients')}
             onCreateDocument={handleCreateDocumentForPatient}
+            onCreateAnamnesis={() => {
+              setView('anamnesis');
+            }}
           />
         )}
 
