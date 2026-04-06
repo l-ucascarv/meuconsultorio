@@ -14,6 +14,7 @@ interface PatientFolderViewProps {
   primaryColor: PrimaryColor;
   onBack: () => void;
   onCreateDocument: () => void;
+  onCreateAnamnesis?: () => void;
 }
 
 export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
