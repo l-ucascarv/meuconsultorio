@@ -24,6 +24,7 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
   primaryColor,
   onBack,
   onCreateDocument,
+  onCreateAnamnesis,
 }) => {
   const palette = COLOR_PALETTES[primaryColor];
   const { user } = useAuth();
