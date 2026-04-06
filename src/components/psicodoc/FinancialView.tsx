@@ -338,43 +338,65 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
     }).format(value);
   };
 
+  const renderCategoryBreakdown = (items: { name: string; value: number }[]) => (
+    <div className="mt-4 space-y-2">
+      {items.map((item, index) => (
+        <div
+          key={`${item.name}-${index}`}
+          className="flex items-center justify-between gap-3 rounded-xl bg-muted/50 px-3 py-2 text-xs md:text-sm"
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ background: COLORS[index % COLORS.length] }}
+            />
+            <span className="truncate font-medium">{item.name}</span>
+          </div>
+          <span className="shrink-0 font-semibold">{formatCurrency(item.value)}</span>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6 py-4 page-enter">
+    <div className="max-w-6xl mx-auto space-y-4 md:space-y-6 py-3 md:py-4 page-enter overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-black">Controle Financeiro</h1>
           <p className="text-muted-foreground text-sm">Gerencie suas receitas e despesas</p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 md:flex md:w-auto">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsCategoryModalOpen(true)}
+            className="w-full min-w-0 px-3 text-xs sm:text-sm"
           >
-            <Tag className="w-4 h-4 mr-2" />
-            Categorias
+            <Tag className="h-4 w-4 shrink-0" />
+            <span className="truncate">Categorias</span>
           </Button>
           <Button
             size="sm"
             onClick={() => setIsTransactionModalOpen(true)}
+            className="w-full min-w-0 px-3 text-xs sm:text-sm"
             style={{ background: palette.hex }}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Transação
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="truncate">Nova Transação</span>
           </Button>
         </div>
       </div>
 
       {/* Month Navigation */}
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-center gap-2 md:gap-4">
         <button 
           onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
           className="p-2 hover:bg-muted rounded-lg transition-colors"
         >
           <Icons.ChevronLeft />
         </button>
-        <h2 className="text-lg font-bold min-w-[200px] text-center capitalize">
+        <h2 className="min-w-0 flex-1 max-w-[220px] text-center text-base md:text-lg font-bold capitalize leading-tight">
           {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
         </h2>
         <button 
@@ -387,42 +409,42 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card-elevated p-6">
+        <div className="card-elevated p-4 md:p-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-              <ArrowUpCircle className="w-6 h-6 text-emerald-500" />
+            <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+              <ArrowUpCircle className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground font-medium">Receitas</p>
-              <p className="text-2xl font-black text-emerald-500">{formatCurrency(totals.income)}</p>
+            <div className="min-w-0">
+              <p className="text-xs md:text-sm text-muted-foreground font-medium">Receitas</p>
+              <p className="text-xl md:text-2xl font-black text-emerald-500 break-words">{formatCurrency(totals.income)}</p>
             </div>
           </div>
         </div>
 
-        <div className="card-elevated p-6">
+        <div className="card-elevated p-4 md:p-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-rose-500/15 flex items-center justify-center">
-              <ArrowDownCircle className="w-6 h-6 text-rose-500" />
+            <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-rose-500/15 flex items-center justify-center">
+              <ArrowDownCircle className="w-5 h-5 md:w-6 md:h-6 text-rose-500" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground font-medium">Despesas</p>
-              <p className="text-2xl font-black text-rose-500">{formatCurrency(totals.expense)}</p>
+            <div className="min-w-0">
+              <p className="text-xs md:text-sm text-muted-foreground font-medium">Despesas</p>
+              <p className="text-xl md:text-2xl font-black text-rose-500 break-words">{formatCurrency(totals.expense)}</p>
             </div>
           </div>
         </div>
 
-        <div className="card-elevated p-6">
+        <div className="card-elevated p-4 md:p-6">
           <div className="flex items-center gap-3">
             <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center"
+              className="w-11 h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center"
               style={{ background: `${palette.hex}15` }}
             >
-              <Wallet className="w-6 h-6" style={{ color: palette.hex }} />
+              <Wallet className="w-5 h-5 md:w-6 md:h-6" style={{ color: palette.hex }} />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground font-medium">Saldo</p>
+            <div className="min-w-0">
+              <p className="text-xs md:text-sm text-muted-foreground font-medium">Saldo</p>
               <p 
-                className="text-2xl font-black"
+                className="text-xl md:text-2xl font-black break-words"
                 style={{ color: totals.balance >= 0 ? '#22c55e' : '#ef4444' }}
               >
                 {formatCurrency(totals.balance)}
@@ -434,18 +456,18 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="dre">DRE</TabsTrigger>
-          <TabsTrigger value="transactions">Transações</TabsTrigger>
-          <TabsTrigger value="categories">Categorias</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 md:grid-cols-4">
+          <TabsTrigger value="overview" className="px-2 py-2 text-[11px] leading-tight whitespace-normal sm:text-xs md:text-sm">Visão Geral</TabsTrigger>
+          <TabsTrigger value="dre" className="px-2 py-2 text-[11px] leading-tight whitespace-normal sm:text-xs md:text-sm">DRE</TabsTrigger>
+          <TabsTrigger value="transactions" className="px-2 py-2 text-[11px] leading-tight whitespace-normal sm:text-xs md:text-sm">Transações</TabsTrigger>
+          <TabsTrigger value="categories" className="px-2 py-2 text-[11px] leading-tight whitespace-normal sm:text-xs md:text-sm">Categorias</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6 mt-6">
+        <TabsContent value="overview" className="space-y-4 md:space-y-6 mt-4 md:mt-6">
           {/* Evolution Chart */}
-          <div className="card-elevated p-6">
+          <div className="card-elevated p-4 md:p-6">
             <h3 className="font-bold mb-4">Evolução (últimos 6 meses)</h3>
-            <div className="h-64">
+            <div className="h-52 md:h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -479,58 +501,62 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
           </div>
 
           {/* Pie Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="card-elevated p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="card-elevated p-4 md:p-6">
               <h3 className="font-bold mb-4 text-emerald-500">Receitas por Categoria</h3>
               {categoryDistribution.income.length > 0 ? (
-                <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryDistribution.income}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={60}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {categoryDistribution.income.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <>
+                  <div className="h-44 md:h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={categoryDistribution.income}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={56}
+                        >
+                          {categoryDistribution.income.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {renderCategoryBreakdown(categoryDistribution.income)}
+                </>
               ) : (
                 <p className="text-muted-foreground text-center py-8">Sem receitas neste mês</p>
               )}
             </div>
 
-            <div className="card-elevated p-6">
+            <div className="card-elevated p-4 md:p-6">
               <h3 className="font-bold mb-4 text-rose-500">Despesas por Categoria</h3>
               {categoryDistribution.expense.length > 0 ? (
-                <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryDistribution.expense}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={60}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {categoryDistribution.expense.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <>
+                  <div className="h-44 md:h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={categoryDistribution.expense}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={56}
+                        >
+                          {categoryDistribution.expense.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {renderCategoryBreakdown(categoryDistribution.expense)}
+                </>
               ) : (
                 <p className="text-muted-foreground text-center py-8">Sem despesas neste mês</p>
               )}
@@ -539,22 +565,22 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
         </TabsContent>
 
         {/* DRE Tab */}
-        <TabsContent value="dre" className="space-y-6 mt-6">
+        <TabsContent value="dre" className="space-y-4 md:space-y-6 mt-4 md:mt-6">
           {/* Projection Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="card-elevated p-5">
+            <div className="card-elevated p-4 md:p-5">
               <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1">Projeção Receita/mês</p>
-              <p className="text-xl font-black text-emerald-500">{formatCurrency(projection.avgIncome)}</p>
+              <p className="text-lg md:text-xl font-black text-emerald-500 break-words">{formatCurrency(projection.avgIncome)}</p>
               <p className="text-[10px] text-muted-foreground mt-1">Média dos últimos 3 meses</p>
             </div>
-            <div className="card-elevated p-5">
+            <div className="card-elevated p-4 md:p-5">
               <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1">Projeção Despesa/mês</p>
-              <p className="text-xl font-black text-rose-500">{formatCurrency(projection.avgExpense)}</p>
+              <p className="text-lg md:text-xl font-black text-rose-500 break-words">{formatCurrency(projection.avgExpense)}</p>
               <p className="text-[10px] text-muted-foreground mt-1">Média dos últimos 3 meses</p>
             </div>
-            <div className="card-elevated p-5">
+            <div className="card-elevated p-4 md:p-5">
               <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1">Resultado Projetado</p>
-              <p className="text-xl font-black" style={{ color: projection.avgNet >= 0 ? '#22c55e' : '#ef4444' }}>
+              <p className="text-lg md:text-xl font-black break-words" style={{ color: projection.avgNet >= 0 ? '#22c55e' : '#ef4444' }}>
                 {formatCurrency(projection.avgNet)}
               </p>
               <p className="text-[10px] text-muted-foreground mt-1">Lucro líquido estimado</p>
@@ -562,9 +588,9 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
           </div>
 
           {/* DRE Chart */}
-          <div className="card-elevated p-6">
+          <div className="card-elevated p-4 md:p-6">
             <h3 className="font-bold mb-4">Fluxo de Caixa Mensal — {format(currentMonth, 'yyyy')}</h3>
-            <div className="h-72">
+            <div className="h-56 md:h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dreData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -586,8 +612,41 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
             </div>
           </div>
 
+          <div className="space-y-3 md:hidden">
+            {dreData.map((row, i) => (
+              <div key={i} className={`card-elevated p-4 ${!row.isPast ? 'opacity-40' : ''}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-black capitalize">{row.monthFull}</h4>
+                  <span className="text-[11px] font-bold text-muted-foreground">{row.margin}% margem</span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Receitas</p>
+                    <p className="mt-1 font-bold text-emerald-500 break-words">{formatCurrency(row.income)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Despesas</p>
+                    <p className="mt-1 font-bold text-rose-500 break-words">{formatCurrency(row.expense)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Resultado</p>
+                    <p className="mt-1 font-bold break-words" style={{ color: row.net >= 0 ? '#22c55e' : '#ef4444' }}>
+                      {formatCurrency(row.net)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Acumulado</p>
+                    <p className="mt-1 font-bold break-words" style={{ color: row.accumulated >= 0 ? '#22c55e' : '#ef4444' }}>
+                      {formatCurrency(row.accumulated)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* DRE Table */}
-          <div className="card-elevated overflow-x-auto">
+          <div className="hidden md:block card-elevated overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
@@ -663,8 +722,8 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
                   const patient = patients.find(p => p.id === transaction.patientId);
 
                   return (
-                    <div key={transaction.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-4">
+                    <div key={transaction.id} className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:bg-muted/50 transition-colors">
+                      <div className="flex min-w-0 items-start gap-3 md:gap-4">
                         <div 
                           className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                             transaction.type === 'income' ? 'bg-emerald-500/15' : 'bg-rose-500/15'
@@ -676,15 +735,15 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
                             <TrendingDown className="w-5 h-5 text-rose-500" />
                           )}
                         </div>
-                        <div>
-                          <p className="font-semibold">{transaction.description}</p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="min-w-0">
+                          <p className="font-semibold break-words">{transaction.description}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             <span>{format(new Date(transaction.transactionDate), 'dd/MM/yyyy')}</span>
                             {category && (
                               <>
                                 <span>•</span>
                                 <span 
-                                  className="px-2 py-0.5 rounded-full text-white"
+                                  className="max-w-[140px] truncate px-2 py-0.5 rounded-full text-white"
                                   style={{ background: category.color }}
                                 >
                                   {category.name}
@@ -700,9 +759,9 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-between gap-3 sm:justify-end">
                         <p 
-                          className="font-bold"
+                          className="font-bold whitespace-nowrap text-sm md:text-base"
                           style={{ color: transaction.type === 'income' ? '#22c55e' : '#ef4444' }}
                         >
                           {transaction.type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
@@ -777,7 +836,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
 
       {/* Add Transaction Modal */}
       <Dialog open={isTransactionModalOpen} onOpenChange={setIsTransactionModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto rounded-3xl p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Nova Transação</DialogTitle>
           </DialogHeader>
@@ -789,7 +848,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
                 className={newTransaction.type === 'income' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}
                 onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income' }))}
               >
-                <ArrowUpCircle className="w-4 h-4 mr-2" />
+                <ArrowUpCircle className="w-4 h-4" />
                 Receita
               </Button>
               <Button
@@ -798,7 +857,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
                 className={newTransaction.type === 'expense' ? 'bg-rose-500 hover:bg-rose-600' : ''}
                 onClick={() => setNewTransaction(prev => ({ ...prev, type: 'expense' }))}
               >
-                <ArrowDownCircle className="w-4 h-4 mr-2" />
+                <ArrowDownCircle className="w-4 h-4" />
                 Despesa
               </Button>
             </div>
@@ -887,7 +946,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
 
       {/* Add Category Modal */}
       <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto rounded-3xl p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Nova Categoria</DialogTitle>
           </DialogHeader>
@@ -922,7 +981,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
 
             <div>
               <Label>Cor</Label>
-              <div className="flex gap-2 mt-2">
+              <div className="mt-2 flex flex-wrap gap-2">
                 {['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'].map(color => (
                   <button
                     key={color}
