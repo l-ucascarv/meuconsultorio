@@ -194,9 +194,20 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
           onClick={onCreateDocument}
           className="p-3 rounded-xl text-white active-touch"
           style={{ background: palette.hex }}
+          title="Novo Documento"
         >
           <Icons.FileText />
         </button>
+        {onCreateAnamnesis && (
+          <button
+            onClick={onCreateAnamnesis}
+            className="p-3 rounded-xl text-white active-touch"
+            style={{ background: palette.hex }}
+            title="Nova Anamnese"
+          >
+            <Icons.ClipboardList />
+          </button>
+        )}
       </header>
 
       {/* Patient Info Card */}
