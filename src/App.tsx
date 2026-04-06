@@ -43,7 +43,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           <h2 className="text-xl font-bold mb-2">Assinatura Inativa</h2>
           <p className="text-muted-foreground mb-6">
             Sua assinatura está {profile.subscription_status === 'pending' ? 'pendente' : 'inativa'}. 
-            Por favor, ative sua assinatura para continuar usando o PsicoDoc AI.
+            Por favor, ative sua assinatura para continuar usando o Meu Consultório.
           </p>
           <button 
             onClick={() => window.location.href = '/'}
