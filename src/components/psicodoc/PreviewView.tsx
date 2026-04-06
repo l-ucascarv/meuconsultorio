@@ -108,7 +108,6 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
   const generateTextContent = () => {
     const sections = [
       `${generatedDoc.title || DOC_DEFINITIONS[reportData.type].label}`,
-      `Documento gerado em conformidade com a Resolução CFP Nº 06/2019`,
       '',
       '1. IDENTIFICAÇÃO',
       generatedDoc.identification,
