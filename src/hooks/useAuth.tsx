@@ -53,13 +53,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Auto-create profile if it doesn't exist (e.g. Google OAuth first login)
     if (!data && userEmail) {
-      const slug = (userName || userEmail.split('@')[0])
+      let baseSlug = (userName || userEmail.split('@')[0])
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9-]/g, '-')
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '');
+
+      // Ensure unique slug
+      let slug = baseSlug;
+      let attempts = 0;
+      while (attempts < 10) {
+        const { data: existing } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('slug', slug)
+          .maybeSingle();
+        if (!existing) break;
+        attempts++;
+        slug = `${baseSlug}-${Math.floor(Math.random() * 9000) + 1000}`;
+      }
 
       const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
