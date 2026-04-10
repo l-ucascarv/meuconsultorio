@@ -65,6 +65,79 @@ const INITIAL_ANAMNESIS: Omit<AnamnesisData, 'patientId' | 'patientName'> = {
   initialHypothesis: '', therapeuticPlan: '',
 };
 
+const PatientSearchSelect: React.FC<{
+  patients: Patient[];
+  selectedPatient: string;
+  onSelect: (id: string) => void;
+  palette: { hex: string };
+}> = ({ patients, selectedPatient, onSelect, palette }) => {
+  const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  const filtered = patients.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const selected = patients.find(p => p.id === selectedPatient);
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <div
+        className="input-field flex items-center gap-2 cursor-pointer"
+        onClick={() => setOpen(!open)}
+      >
+        {selected ? (
+          <span className="flex-1 truncate">{selected.name}</span>
+        ) : (
+          <span className="flex-1 text-muted-foreground">Buscar paciente...</span>
+        )}
+        <Icons.ChevronDown />
+      </div>
+      {open && (
+        <div className="absolute z-50 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+          <div className="p-2 border-b border-border">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Digitar nome do paciente..."
+              className="w-full px-3 py-2 text-sm bg-muted rounded-lg focus:outline-none"
+              autoFocus
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <p className="text-xs text-muted-foreground p-3 text-center">Nenhum paciente encontrado</p>
+            ) : (
+              filtered.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => { onSelect(p.id); setOpen(false); setSearch(''); }}
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors ${
+                    p.id === selectedPatient ? 'font-bold' : ''
+                  }`}
+                  style={p.id === selectedPatient ? { color: palette.hex } : {}}
+                >
+                  {p.name}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const AnamnesisView: React.FC<AnamnesisViewProps> = ({ patients, primaryColor, onBack, selectedPatientId }) => {
   const palette = COLOR_PALETTES[primaryColor];
   const { user } = useAuth();
