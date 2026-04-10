@@ -14,3 +14,4 @@ export * from './FinancialView';
 export * from './AvailabilitySettingsView';
 export * from './AppointmentDetailDrawer';
 export * from './AnamnesisView';
+export * from './OnboardingTour';
