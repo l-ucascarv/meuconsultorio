@@ -2,6 +2,7 @@ import React from 'react';
 import { DocumentType, ReportData, PrimaryColor, Patient } from '../../types/psicodoc';
 import { COLOR_PALETTES, DOC_DEFINITIONS } from '../../constants/psicodoc';
 import { Icons } from './Icons';
+import { PatientSearchSelect } from './PatientSearchSelect';
 
 interface CreateDocumentViewProps {
   reportData: ReportData;
@@ -161,12 +162,15 @@ export const CreateDocumentView: React.FC<CreateDocumentViewProps> = ({
       {patients.length > 0 && (
         <div className="space-y-3">
           <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">Selecionar Paciente</label>
-          <select value={reportData.patientId || ''} onChange={(e) => handlePatientSelect(e.target.value)} className="input-field">
-            <option value="">Digitar manualmente</option>
-            {patients.map(patient => (
-              <option key={patient.id} value={patient.id}>{patient.name}</option>
-            ))}
-          </select>
+          <PatientSearchSelect
+            patients={patients}
+            selectedPatient={reportData.patientId || ''}
+            onSelect={(id) => handlePatientSelect(id)}
+            palette={palette}
+            placeholder="Buscar paciente..."
+            allowEmpty
+            emptyLabel="Digitar manualmente"
+          />
         </div>
       )}
 
