@@ -518,6 +518,14 @@ const PsicoDocApp: React.FC = () => {
       {/* Change Password Modal */}
       <ChangePasswordModal isOpen={mustChangePassword} />
 
+      {/* Onboarding Tour */}
+      {showTour && !mustChangePassword && (
+        <OnboardingTour
+          primaryColor={psychoInfo.primaryColor}
+          onComplete={handleCompleteTour}
+        />
+      )}
+
       {/* Sidebar Desktop */}
       <Sidebar 
         view={view} 
