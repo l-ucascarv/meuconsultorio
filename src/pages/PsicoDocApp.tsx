@@ -49,8 +49,25 @@ const PsicoDocApp: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [financialCategories, setFinancialCategories] = useState<FinancialCategory[]>([]);
   const [financialTransactions, setFinancialTransactions] = useState<FinancialTransaction[]>([]);
+  const [showTour, setShowTour] = useState(false);
 
-  // Sync profile data to psychoInfo
+  // Check if user needs onboarding tour
+  useEffect(() => {
+    if (user && !isLoading) {
+      const tourKey = `tour_completed_${user.id}`;
+      if (!localStorage.getItem(tourKey)) {
+        setShowTour(true);
+      }
+    }
+  }, [user, isLoading]);
+
+  const handleCompleteTour = () => {
+    if (user) {
+      localStorage.setItem(`tour_completed_${user.id}`, 'true');
+    }
+    setShowTour(false);
+  };
+
   useEffect(() => {
     if (profile) {
       setPsychoInfo(prev => ({
