@@ -123,19 +123,15 @@ export const AnamnesisView: React.FC<AnamnesisViewProps> = ({ patients, primaryC
         </div>
       </header>
 
-      {/* Patient Selection */}
+      {/* Patient Selection with Search */}
       <div className="card-elevated p-4 space-y-2">
         <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Paciente</label>
-        <select
-          value={selectedPatient}
-          onChange={(e) => setSelectedPatient(e.target.value)}
-          className="input-field"
-        >
-          <option value="">Selecionar paciente...</option>
-          {patients.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+        <PatientSearchSelect
+          patients={patients}
+          selectedPatient={selectedPatient}
+          onSelect={setSelectedPatient}
+          palette={palette}
+        />
       </div>
 
       {selectedPatient && (
