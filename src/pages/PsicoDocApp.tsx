@@ -25,6 +25,7 @@ import {
   FinancialTransaction,
   AvailabilitySettingsView,
   AnamnesisView,
+  OnboardingTour,
 } from '../components/psicodoc';
 import { useAuth } from '@/hooks/useAuth';
 import { ChangePasswordModal } from '@/components/psicodoc/ChangePasswordModal';
@@ -48,8 +49,25 @@ const PsicoDocApp: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [financialCategories, setFinancialCategories] = useState<FinancialCategory[]>([]);
   const [financialTransactions, setFinancialTransactions] = useState<FinancialTransaction[]>([]);
+  const [showTour, setShowTour] = useState(false);
 
-  // Sync profile data to psychoInfo
+  // Check if user needs onboarding tour
+  useEffect(() => {
+    if (user && !isLoading) {
+      const tourKey = `tour_completed_${user.id}`;
+      if (!localStorage.getItem(tourKey)) {
+        setShowTour(true);
+      }
+    }
+  }, [user, isLoading]);
+
+  const handleCompleteTour = () => {
+    if (user) {
+      localStorage.setItem(`tour_completed_${user.id}`, 'true');
+    }
+    setShowTour(false);
+  };
+
   useEffect(() => {
     if (profile) {
       setPsychoInfo(prev => ({
@@ -499,6 +517,14 @@ const PsicoDocApp: React.FC = () => {
     <div className={`min-h-screen w-full overflow-x-hidden flex flex-col md:flex-row transition-colors duration-300 ${themeClass}`}>
       {/* Change Password Modal */}
       <ChangePasswordModal isOpen={mustChangePassword} />
+
+      {/* Onboarding Tour */}
+      {showTour && !mustChangePassword && (
+        <OnboardingTour
+          primaryColor={psychoInfo.primaryColor}
+          onComplete={handleCompleteTour}
+        />
+      )}
 
       {/* Sidebar Desktop */}
       <Sidebar 
