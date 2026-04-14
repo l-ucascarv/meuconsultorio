@@ -26,6 +26,7 @@ import {
   AvailabilitySettingsView,
   AnamnesisView,
   OnboardingTour,
+  ProfileOnboarding,
 } from '../components/psicodoc';
 import { useAuth } from '@/hooks/useAuth';
 import { ChangePasswordModal } from '@/components/psicodoc/ChangePasswordModal';
@@ -50,16 +51,43 @@ const PsicoDocApp: React.FC = () => {
   const [financialCategories, setFinancialCategories] = useState<FinancialCategory[]>([]);
   const [financialTransactions, setFinancialTransactions] = useState<FinancialTransaction[]>([]);
   const [showTour, setShowTour] = useState(false);
+  const [showProfileOnboarding, setShowProfileOnboarding] = useState(false);
 
   // Check if user needs onboarding tour
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && !isLoading && profile) {
+      const onboardingKey = `onboarding_completed_${user.id}`;
+      const tourKey = `tour_completed_${user.id}`;
+      // Show profile onboarding if CRP is not set and onboarding not completed
+      if (!localStorage.getItem(onboardingKey) && !profile.crp) {
+        setShowProfileOnboarding(true);
+      } else if (!localStorage.getItem(tourKey)) {
+        setShowTour(true);
+      }
+    }
+  }, [user, isLoading, profile]);
+
+  const handleCompleteOnboarding = async (data: { crp: string; specialty: string }) => {
+    if (!user) return;
+    try {
+      await supabase.from('profiles').update({
+        crp: data.crp,
+        specialty: data.specialty || null,
+      }).eq('user_id', user.id);
+      
+      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+      setShowProfileOnboarding(false);
+      await refreshProfile();
+      
+      // Now show tour
       const tourKey = `tour_completed_${user.id}`;
       if (!localStorage.getItem(tourKey)) {
         setShowTour(true);
       }
+    } catch (error) {
+      console.error('Error saving onboarding data:', error);
     }
-  }, [user, isLoading]);
+  };
 
   const handleCompleteTour = () => {
     if (user) {
@@ -518,8 +546,16 @@ const PsicoDocApp: React.FC = () => {
       {/* Change Password Modal */}
       <ChangePasswordModal isOpen={mustChangePassword} />
 
+      {/* Profile Onboarding (consent + CRP) */}
+      {showProfileOnboarding && !mustChangePassword && (
+        <ProfileOnboarding
+          primaryColor={psychoInfo.primaryColor}
+          onComplete={handleCompleteOnboarding}
+        />
+      )}
+
       {/* Onboarding Tour */}
-      {showTour && !mustChangePassword && (
+      {showTour && !mustChangePassword && !showProfileOnboarding && (
         <OnboardingTour
           primaryColor={psychoInfo.primaryColor}
           onComplete={handleCompleteTour}
