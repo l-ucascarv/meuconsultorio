@@ -546,8 +546,16 @@ const PsicoDocApp: React.FC = () => {
       {/* Change Password Modal */}
       <ChangePasswordModal isOpen={mustChangePassword} />
 
+      {/* Profile Onboarding (consent + CRP) */}
+      {showProfileOnboarding && !mustChangePassword && (
+        <ProfileOnboarding
+          primaryColor={psychoInfo.primaryColor}
+          onComplete={handleCompleteOnboarding}
+        />
+      )}
+
       {/* Onboarding Tour */}
-      {showTour && !mustChangePassword && (
+      {showTour && !mustChangePassword && !showProfileOnboarding && (
         <OnboardingTour
           primaryColor={psychoInfo.primaryColor}
           onComplete={handleCompleteTour}
