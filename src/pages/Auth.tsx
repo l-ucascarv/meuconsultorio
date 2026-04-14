@@ -108,9 +108,14 @@ const Auth: React.FC = () => {
           }
         } else {
           toast({
-            title: 'Conta criada!',
-            description: 'Seu cadastro foi realizado com sucesso.',
+            title: 'Verifique seu e-mail!',
+            description: 'Enviamos um link de confirmação para ' + email + '. Confirme seu e-mail para ativar sua conta.',
+            duration: 10000,
           });
+          setIsLogin(true);
+          setEmail('');
+          setPassword('');
+          setName('');
         }
       }
     } finally {

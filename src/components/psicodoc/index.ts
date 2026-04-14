@@ -16,3 +16,4 @@ export * from './AppointmentDetailDrawer';
 export * from './AnamnesisView';
 export * from './OnboardingTour';
 export * from './PatientSearchSelect';
+export * from './ProfileOnboarding';
