@@ -314,6 +314,36 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Logout */}
+        <div className="mt-6 pt-4 border-t border-border space-y-3">
+          <button
+            onClick={async () => {
+              const { signOut } = await import('@/hooks/useAuth').then(() => ({ signOut: async () => { await supabase.auth.signOut(); } }));
+              await supabase.auth.signOut();
+              window.location.href = '/';
+            }}
+            className="w-full py-3 rounded-xl font-bold text-sm transition-all border-2 border-border text-foreground hover:bg-muted flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            Sair da Conta
+          </button>
+
+          <button
+            onClick={() => {
+              if (window.confirm('Tem certeza que deseja excluir sua conta? Essa ação não pode ser desfeita.')) {
+                toast({
+                  title: "Solicitação enviada",
+                  description: "Para excluir sua conta, entre em contato com o suporte da plataforma.",
+                });
+              }
+            }}
+            className="w-full py-3 rounded-xl font-bold text-sm transition-all border-2 border-destructive text-destructive hover:bg-destructive/10 flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            Excluir Conta
+          </button>
+        </div>
       </div>
     </div>
   );
