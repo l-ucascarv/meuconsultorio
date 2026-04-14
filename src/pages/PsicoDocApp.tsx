@@ -67,6 +67,28 @@ const PsicoDocApp: React.FC = () => {
     }
   }, [user, isLoading, profile]);
 
+  const handleCompleteOnboarding = async (data: { crp: string; specialty: string }) => {
+    if (!user) return;
+    try {
+      await supabase.from('profiles').update({
+        crp: data.crp,
+        specialty: data.specialty || null,
+      }).eq('user_id', user.id);
+      
+      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+      setShowProfileOnboarding(false);
+      await refreshProfile();
+      
+      // Now show tour
+      const tourKey = `tour_completed_${user.id}`;
+      if (!localStorage.getItem(tourKey)) {
+        setShowTour(true);
+      }
+    } catch (error) {
+      console.error('Error saving onboarding data:', error);
+    }
+  };
+
   const handleCompleteTour = () => {
     if (user) {
       localStorage.setItem(`tour_completed_${user.id}`, 'true');
