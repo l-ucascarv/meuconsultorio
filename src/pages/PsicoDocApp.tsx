@@ -26,6 +26,7 @@ import {
   AvailabilitySettingsView,
   AnamnesisView,
   OnboardingTour,
+  ProfileOnboarding,
 } from '../components/psicodoc';
 import { useAuth } from '@/hooks/useAuth';
 import { ChangePasswordModal } from '@/components/psicodoc/ChangePasswordModal';
@@ -50,16 +51,21 @@ const PsicoDocApp: React.FC = () => {
   const [financialCategories, setFinancialCategories] = useState<FinancialCategory[]>([]);
   const [financialTransactions, setFinancialTransactions] = useState<FinancialTransaction[]>([]);
   const [showTour, setShowTour] = useState(false);
+  const [showProfileOnboarding, setShowProfileOnboarding] = useState(false);
 
   // Check if user needs onboarding tour
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && !isLoading && profile) {
+      const onboardingKey = `onboarding_completed_${user.id}`;
       const tourKey = `tour_completed_${user.id}`;
-      if (!localStorage.getItem(tourKey)) {
+      // Show profile onboarding if CRP is not set and onboarding not completed
+      if (!localStorage.getItem(onboardingKey) && !profile.crp) {
+        setShowProfileOnboarding(true);
+      } else if (!localStorage.getItem(tourKey)) {
         setShowTour(true);
       }
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, profile]);
 
   const handleCompleteTour = () => {
     if (user) {
