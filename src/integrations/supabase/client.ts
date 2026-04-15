@@ -8,10 +8,24 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY || SUPABASE_PUBLISHABLE_KEY.includes('<')) {
+  throw new Error(
+    [
+      'Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no seu .env.',
+      'Exemplo:',
+      'VITE_SUPABASE_URL="https://<project-ref>.supabase.co"',
+      'VITE_SUPABASE_PUBLISHABLE_KEY="<anon-key>"',
+    ].join('\n')
+  );
+}
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    // sessionStorage: ao fechar o navegador, o usuário precisa logar novamente
+    // (com fallback seguro para ambientes sem window, ex.: SSR/testes)
+    storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
     persistSession: true,
-    autoRefreshToken: true,
-  }
+    // não manter o usuário logado indefinidamente via refresh silencioso
+    autoRefreshToken: false,
+  },
 });

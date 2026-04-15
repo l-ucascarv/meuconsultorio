@@ -60,6 +60,34 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Google Login (localhost)
+
+If Google sign-in shows `Error 400: redirect_uri_mismatch`, it means the Google OAuth client is not allowing the Supabase callback URL.
+
+1) In Supabase Dashboard → Authentication → Providers → Google
+- Ensure Google provider is enabled and you have a valid Client ID/Secret.
+- Copy the required redirect URL (it follows this pattern):
+	- `https://<project-ref>.supabase.co/auth/v1/callback`
+
+For this project, `<project-ref>` comes from `VITE_SUPABASE_URL` in `.env`.
+
+Current project ref (from `.env`):
+- `odlukohernadrwygjlfs`
+
+2) In Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs
+- Add the Supabase callback URL to **Authorized redirect URIs**:
+	- `https://<project-ref>.supabase.co/auth/v1/callback`
+- Add your local URLs to **Authorized JavaScript origins** (typical):
+	- `http://localhost:8080`
+	- `http://127.0.0.1:8080`
+
+3) In Supabase Dashboard → Authentication → URL Configuration
+- Add local redirect URLs so Supabase accepts returning to your SPA:
+	- `http://localhost:8080/auth/callback`
+	- `http://127.0.0.1:8080/auth/callback`
+
+Then restart `npm run dev` and try “Entrar com Google” again.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.

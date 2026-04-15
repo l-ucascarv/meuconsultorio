@@ -1,27 +1,59 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { z } from "zod";
+import { COLOR_PALETTES } from "../../constants/psicodoc";
+import { Icons } from "./Icons";
 
 const formatCRP = (value: string): string => {
   const digits = value.replace(/\D/g, "").slice(0, 8);
   if (digits.length <= 2) return digits;
   return digits.slice(0, 2) + "/" + digits.slice(2);
 };
-import { COLOR_PALETTES } from "../../constants/psicodoc";
-import { Icons } from "./Icons";
+
+const passwordSchema = z
+  .string()
+  .min(8, "Senha deve ter pelo menos 8 caracteres")
+  .regex(/[A-Z]/, "Senha deve conter pelo menos uma letra maiúscula")
+  .regex(/[a-z]/, "Senha deve conter pelo menos uma letra minúscula")
+  .regex(/[0-9]/, "Senha deve conter pelo menos um número");
 
 interface ProfileOnboardingProps {
   primaryColor: string;
-  onComplete: (data: { crp: string; specialty: string }) => void;
+  requirePassword?: boolean;
+  skipConsent?: boolean;
+  initialCrp?: string;
+  initialSpecialty?: string;
+  onComplete: (data: { crp: string; specialty: string; password?: string }) => void;
 }
 
 type Step = "consent" | "professional";
 
-export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({ primaryColor, onComplete }) => {
-  const palette = COLOR_PALETTES[primaryColor] || COLOR_PALETTES.indigo;
-  const [step, setStep] = useState<Step>("consent");
+export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
+  primaryColor,
+  requirePassword = false,
+  skipConsent = false,
+  initialCrp = "",
+  initialSpecialty = "",
+  onComplete,
+}) => {
+  const palette = useMemo(() => COLOR_PALETTES[primaryColor] || COLOR_PALETTES.indigo, [primaryColor]);
+
+  // Prevent background page from scrolling while this full-screen onboarding is open.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+
+  const [step, setStep] = useState<Step>(skipConsent ? "professional" : "consent");
   const [consentChecked, setConsentChecked] = useState(false);
-  const [crp, setCrp] = useState("");
-  const [specialty, setSpecialty] = useState("");
-  const [errors, setErrors] = useState<{ crp?: string }>({});
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [crp, setCrp] = useState(initialCrp);
+  const [specialty, setSpecialty] = useState(initialSpecialty);
+  const [errors, setErrors] = useState<{ crp?: string; password?: string; confirm?: string }>({});
 
   const handleConsent = () => {
     if (consentChecked) {
@@ -30,23 +62,45 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({ primaryCol
   };
 
   const handleSubmit = () => {
-    const newErrors: { crp?: string } = {};
+    const newErrors: { crp?: string; password?: string; confirm?: string } = {};
+
+    if (requirePassword) {
+      try {
+        passwordSchema.parse(password);
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.password = e.errors[0].message;
+        }
+      }
+
+      if (password !== confirmPassword) {
+        newErrors.confirm = "As senhas não coincidem";
+      }
+    }
+
     if (!crp.trim()) {
       newErrors.crp = "O CRP é obrigatório para profissionais de psicologia.";
     } else if (crp.trim().length < 4) {
       newErrors.crp = "Informe um CRP válido (ex: 06/123456).";
     }
+
     setErrors(newErrors);
+
     if (Object.keys(newErrors).length === 0) {
-      onComplete({ crp: crp.trim(), specialty: specialty.trim() });
+      onComplete({
+        crp: crp.trim(),
+        specialty: specialty.trim(),
+        password: requirePassword ? password : undefined,
+      });
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="p-5 text-center" style={{ backgroundColor: palette.hex + "15" }}>
+    <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm overflow-y-auto">
+      <div className="min-h-full flex items-start md:items-center justify-center p-4">
+        <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
+          {/* Header */}
+          <div className="p-5 text-center shrink-0" style={{ backgroundColor: palette.hex + "15" }}>
           <div
             className="inline-flex items-center justify-center w-14 h-14 rounded-xl mb-3"
             style={{ backgroundColor: palette.hex }}
@@ -70,15 +124,17 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({ primaryCol
           <p className="text-xs text-muted-foreground mt-1">
             {step === "consent"
               ? "Precisamos da sua permissão antes de continuar"
-              : "Informe seus dados para emissão de documentos"}
+              : requirePassword
+                ? "Defina sua senha e complete seus dados"
+                : "Informe seus dados para emissão de documentos"}
           </p>
         </div>
 
-        {/* Content */}
-        <div className="p-5">
-          {step === "consent" && (
-            <div className="space-y-4">
-              <div className="bg-muted rounded-xl p-4 text-xs text-muted-foreground space-y-2 max-h-48 overflow-y-auto">
+          {/* Content */}
+          <div className="p-5 overflow-y-auto min-h-0">
+            {step === "consent" && (
+              <div className="space-y-4">
+                <div className="bg-muted rounded-xl p-4 text-xs text-muted-foreground space-y-2">
                 <p className="font-semibold text-foreground text-sm">Termos de Consentimento</p>
                 <p>
                   Ao utilizar o <strong>Meu Consultório</strong>, você autoriza o uso dos seguintes dados obtidos
@@ -133,6 +189,52 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({ primaryCol
 
           {step === "professional" && (
             <div className="space-y-4">
+              {requirePassword && (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                      Senha (Obrigatório)
+                    </label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className={`w-full px-4 py-3 rounded-xl border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all ${
+                        errors.password ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"
+                      }`}
+                    />
+                    {errors.password && <p className="text-destructive text-xs">{errors.password}</p>}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                      Confirmar Senha
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className={`w-full px-4 py-3 rounded-xl border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all ${
+                        errors.confirm ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"
+                      }`}
+                    />
+                    {errors.confirm && <p className="text-destructive text-xs">{errors.confirm}</p>}
+                  </div>
+
+                  <div className="text-xs text-muted-foreground bg-muted p-3 rounded-lg">
+                    <p className="font-semibold mb-1">A senha deve conter:</p>
+                    <ul className="space-y-1">
+                      <li className={password.length >= 8 ? "text-green-600" : ""}>• Pelo menos 8 caracteres</li>
+                      <li className={/[A-Z]/.test(password) ? "text-green-600" : ""}>• Uma letra maiúscula</li>
+                      <li className={/[a-z]/.test(password) ? "text-green-600" : ""}>• Uma letra minúscula</li>
+                      <li className={/[0-9]/.test(password) ? "text-green-600" : ""}>• Um número</li>
+                    </ul>
+                  </div>
+                </>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
                   CRP (Obrigatório)
@@ -143,8 +245,9 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({ primaryCol
                   onChange={(e) => setCrp(formatCRP(e.target.value))}
                   placeholder="Ex: 06/123456"
                   maxLength={9} // 2 + "/" + 6 = 9
-                  className={`w-full px-4 py-3 rounded-xl border bg-background text-foreground text-sm
-                  ${errors.crp ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"}`}
+                  className={`w-full px-4 py-3 rounded-xl border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all ${
+                    errors.crp ? "border-destructive focus:ring-destructive" : "border-border focus:ring-primary"
+                  }`}
                 />
                 {errors.crp && <p className="text-destructive text-xs">{errors.crp}</p>}
               </div>
@@ -173,13 +276,14 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({ primaryCol
           )}
         </div>
 
-        {/* Progress */}
-        <div className="px-5 pb-4 flex gap-2">
-          <div className="flex-1 h-1.5 rounded-full" style={{ backgroundColor: palette.hex }} />
-          <div
-            className="flex-1 h-1.5 rounded-full"
-            style={{ backgroundColor: step === "professional" ? palette.hex : palette.hex + "30" }}
-          />
+          {/* Progress */}
+          <div className="px-5 pb-4 flex gap-2 shrink-0">
+            <div className="flex-1 h-1.5 rounded-full" style={{ backgroundColor: palette.hex }} />
+            <div
+              className="flex-1 h-1.5 rounded-full"
+              style={{ backgroundColor: step === "professional" ? palette.hex : palette.hex + "30" }}
+            />
+          </div>
         </div>
       </div>
     </div>

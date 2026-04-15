@@ -26,7 +26,6 @@ const navItems: NavItem[] = [
   { id: 'history', label: 'Histórico', icon: <Icons.History /> },
   { id: 'patients', label: 'Pacientes', icon: <Icons.Users /> },
   { id: 'agenda', label: 'Agenda', icon: <Icons.Calendar /> },
-  { id: 'availability', label: 'Agendamento Online', icon: <Icons.Share /> },
   { id: 'financial', label: 'Financeiro', icon: <Icons.Wallet /> },
   { id: 'profile', label: 'Perfil', icon: <Icons.User /> },
 ];
@@ -36,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ view, setView, primaryColor, o
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [agendaOpen, setAgendaOpen] = useState(view === 'agenda' || view === 'availability');
 
   // Check if user is admin
   useEffect(() => {
@@ -52,6 +52,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ view, setView, primaryColor, o
 
     checkAdmin();
   }, [user]);
+
+  useEffect(() => {
+    if (view === 'agenda' || view === 'availability') {
+      setAgendaOpen(true);
+    }
+  }, [view]);
 
   return (
     <nav className="no-print hidden md:flex w-64 bg-sidebar text-sidebar-foreground flex-col fixed h-full z-40">
@@ -71,19 +77,70 @@ export const Sidebar: React.FC<SidebarProps> = ({ view, setView, primaryColor, o
       </div>
       
       <div className="flex-1 px-4 space-y-1">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setView(item.id)}
-            className={`sidebar-item w-full ${
-              view === item.id ? 'sidebar-item-active' : 'sidebar-item-inactive'
-            }`}
-            style={view === item.id ? { background: `${palette.hex}20` } : {}}
-          >
-            {item.icon}
-            <span>{item.label}</span>
-          </button>
-        ))}
+        {navItems.map((item) => {
+          if (item.id !== 'agenda') {
+            return (
+              <button
+                key={item.id}
+                onClick={() => setView(item.id)}
+                className={`sidebar-item w-full ${
+                  view === item.id ? 'sidebar-item-active' : 'sidebar-item-inactive'
+                }`}
+                style={view === item.id ? { background: `${palette.hex}20` } : {}}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            );
+          }
+
+          const agendaActive = view === 'agenda' || view === 'availability';
+
+          return (
+            <div key={item.id} className="space-y-1">
+              <div className="relative">
+                <button
+                  onClick={() => setView('agenda')}
+                  className={`sidebar-item w-full pr-10 ${
+                    agendaActive ? 'sidebar-item-active' : 'sidebar-item-inactive'
+                  }`}
+                  style={agendaActive ? { background: `${palette.hex}20` } : {}}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </button>
+
+                <button
+                  type="button"
+                  aria-label={agendaOpen ? 'Recolher Agenda' : 'Expandir Agenda'}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setAgendaOpen((v) => !v);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                >
+                  <span className={`block transition-transform ${agendaOpen ? 'rotate-180' : ''}`}>
+                    <Icons.ChevronDown />
+                  </span>
+                </button>
+              </div>
+
+              {agendaOpen && (
+                <button
+                  onClick={() => setView('availability')}
+                  className={`sidebar-item w-full pl-12 py-2 text-sm ${
+                    view === 'availability' ? 'sidebar-item-active' : 'sidebar-item-inactive'
+                  }`}
+                  style={view === 'availability' ? { background: `${palette.hex}20` } : {}}
+                >
+                  <Icons.Share />
+                  <span>Agendamento Online</span>
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
       
       <div className="p-6 border-t border-sidebar-border space-y-3">
