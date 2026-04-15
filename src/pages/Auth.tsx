@@ -144,6 +144,7 @@ const Auth: React.FC = () => {
           setIsLogin(true);
           setEmail('');
           setPassword('');
+          setConfirmPassword('');
           setName('');
           setCrp('');
           setSpecialty('');
