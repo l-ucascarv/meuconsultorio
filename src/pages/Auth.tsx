@@ -248,6 +248,27 @@ const Auth: React.FC = () => {
             {!isLogin && (
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">
+                  Confirmar Senha
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className={`w-full px-4 py-3 rounded-xl border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all ${
+                    errors.confirmPassword ? 'border-destructive' : 'border-border'
+                  }`}
+                  disabled={isLoading}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-destructive text-xs ml-1">{errors.confirmPassword}</p>
+                )}
+              </div>
+            )}
+
+            {!isLogin && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">
                   CRP (Obrigatório)
                 </label>
                 <input
