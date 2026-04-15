@@ -341,17 +341,29 @@ const Auth: React.FC = () => {
           <button
             type="button"
             onClick={async () => {
-              const redirectTo = `${window.location.origin}/auth/callback`;
-              const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                  redirectTo,
-                },
-              });
-              if (error) {
+              try {
+                const result = await lovable.auth.signInWithOAuth("google", {
+                  redirect_uri: window.location.origin,
+                });
+
+                if (result.error) {
+                  toast({
+                    title: 'Erro ao entrar com Google',
+                    description: result.error.message,
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+
+                if (result.redirected) {
+                  return;
+                }
+
+                navigate('/app');
+              } catch (err) {
                 toast({
                   title: 'Erro ao entrar com Google',
-                  description: error.message,
+                  description: err instanceof Error ? err.message : String(err),
                   variant: 'destructive',
                 });
               }
