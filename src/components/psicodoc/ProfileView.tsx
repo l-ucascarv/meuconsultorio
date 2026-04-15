@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { PsychologistInfo, PrimaryColor, SubscriptionPlan } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
@@ -15,16 +15,46 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   psychoInfo,
   setPsychoInfo,
 }) => {
-  const palette = COLOR_PALETTES[psychoInfo.primaryColor];
   const colors: PrimaryColor[] = ['indigo', 'emerald', 'rose', 'amber', 'slate'];
-  const { user, profile } = useAuth();
+  const { user, profile, signOut, refreshProfile } = useAuth();
   const { toast } = useToast();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState<PsychologistInfo>(psychoInfo);
   const [slug, setSlug] = useState(psychoInfo.slug || '');
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
 
+  const palette = useMemo(
+    () => COLOR_PALETTES[draft.primaryColor] || COLOR_PALETTES.indigo,
+    [draft.primaryColor]
+  );
+
+  const currentInfo = isEditing ? draft : psychoInfo;
+
+  const hasChanges = useMemo(() => {
+    const currentSlug = (slug || '').trim();
+    const baseSlug = (psychoInfo.slug || '').trim();
+
+    return (
+      isEditing &&
+      (
+        draft.name !== psychoInfo.name ||
+        draft.crp !== psychoInfo.crp ||
+        (draft.specialty || '') !== (psychoInfo.specialty || '') ||
+        draft.theme !== psychoInfo.theme ||
+        draft.primaryColor !== psychoInfo.primaryColor ||
+        draft.plan !== psychoInfo.plan ||
+        currentSlug !== baseSlug
+      )
+    );
+  }, [draft, isEditing, psychoInfo, slug]);
+
   useEffect(() => {
-    setSlug(profile?.slug || '');
-  }, [profile]);
+    if (isEditing) return;
+    setDraft(psychoInfo);
+    setSlug((psychoInfo.slug || profile?.slug || '').trim());
+    setIsSlugAvailable(null);
+  }, [isEditing, profile, psychoInfo]);
 
   // Check slug availability
   const checkSlugAvailability = async (newSlug: string) => {
@@ -59,46 +89,106 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     checkSlugAvailability(formatted);
   };
 
-  const handleSaveSlug = async () => {
-    if (!user || !isSlugAvailable) return;
+  const [isSaving, setIsSaving] = useState(false);
 
+  const handleStartEdit = () => {
+    setDraft(psychoInfo);
+    setSlug((psychoInfo.slug || profile?.slug || '').trim());
+    setIsSlugAvailable(true);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setDraft(psychoInfo);
+    setSlug((psychoInfo.slug || profile?.slug || '').trim());
+    setIsSlugAvailable(null);
+    setIsEditing(false);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
+    const name = draft.name.trim();
+    const crp = draft.crp.trim();
+    const specialty = (draft.specialty || '').trim();
+
+    if (!name || !crp || !specialty) {
+      toast({
+        title: 'Campos obrigatórios',
+        description: 'Preencha Nome, CRP e Especialidade para salvar o perfil.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const nextSlug = slug.trim();
+    if (nextSlug && nextSlug.length < 3) {
+      toast({
+        title: 'Slug inválido',
+        description: 'A URL deve ter pelo menos 3 caracteres (ou deixe em branco).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (nextSlug.length >= 3 && isSlugAvailable === false) {
+      toast({
+        title: 'URL indisponível',
+        description: 'Escolha outra URL (slug).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSaving(true);
     try {
+      const payload = {
+        name,
+        crp,
+        specialty,
+        theme: draft.theme,
+        primary_color: draft.primaryColor,
+        subscription_plan: draft.plan,
+        slug: nextSlug || null,
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update({ slug })
+        .update(payload)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      setPsychoInfo(prev => ({ ...prev, slug }));
-      toast({
-        title: 'URL salva!',
-        description: `Sua URL personalizada é: ${window.location.origin}/${slug} | Agendamento: ${window.location.origin}/${slug}/agendamento`,
-      });
-    } catch (error) {
-      console.error('Error saving slug:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar a URL.',
-        variant: 'destructive',
-      });
-    }
-  };
+      setPsychoInfo(prev => ({
+        ...prev,
+        ...draft,
+        slug: nextSlug || undefined,
+      }));
 
-  const [isSaving, setIsSaving] = useState(false);
+      await refreshProfile();
 
-  const handleSaveProfile = async () => {
-    if (!user) return;
-    setIsSaving(true);
-    try {
-      setPsychoInfo(prev => ({ ...prev })); // triggers save via handleSetPsychoInfo
       toast({
         title: 'Perfil salvo!',
         description: 'Suas informações foram atualizadas com sucesso.',
       });
+
+      setIsEditing(false);
+      setIsSlugAvailable(null);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      const message = error instanceof Error ? error.message : 'Não foi possível salvar o perfil.';
+      toast({
+        title: 'Erro ao salvar perfil',
+        description: message,
+        variant: 'destructive',
+      });
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -111,14 +201,44 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             Configure suas informações profissionais
           </p>
         </div>
-        <button
-          onClick={handleSaveProfile}
-          disabled={isSaving}
-          className="px-5 py-2.5 text-white rounded-xl font-bold text-sm disabled:opacity-50"
-          style={{ background: palette.hex }}
-        >
-          {isSaving ? 'Salvando...' : 'Salvar Perfil'}
-        </button>
+        <div className="flex items-center gap-2">
+          {!isEditing ? (
+            <button
+              onClick={handleStartEdit}
+              className="px-5 py-2.5 text-white rounded-xl font-bold text-sm"
+              style={{ background: palette.hex }}
+            >
+              Editar perfil
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+                className="px-4 py-2.5 border-2 border-border rounded-xl font-bold text-sm hover:bg-muted transition-all disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              {hasChanges && (
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                  className="px-5 py-2.5 text-white rounded-xl font-bold text-sm disabled:opacity-50"
+                  style={{ background: palette.hex }}
+                >
+                  {isSaving ? 'Salvando...' : 'Salvar perfil'}
+                </button>
+              )}
+            </>
+          )}
+
+          <button
+            onClick={handleSignOut}
+            className="px-4 py-2.5 border-2 border-border rounded-xl font-bold text-sm hover:bg-muted transition-all"
+          >
+            Sair
+          </button>
+        </div>
       </header>
 
       {/* Profile Form */}
@@ -135,10 +255,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </label>
             <input
               type="text"
-              value={psychoInfo.name}
-              onChange={(e) => setPsychoInfo(prev => ({ ...prev, name: e.target.value }))}
+              value={currentInfo.name}
+              onChange={(e) => isEditing && setDraft(prev => ({ ...prev, name: e.target.value }))}
+              disabled={!isEditing}
               placeholder="Seu nome profissional"
-              className="input-field"
+              className="input-field disabled:opacity-60"
             />
           </div>
 
@@ -149,10 +270,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </label>
               <input
                 type="text"
-                value={psychoInfo.crp}
-                onChange={(e) => setPsychoInfo(prev => ({ ...prev, crp: e.target.value }))}
+                value={currentInfo.crp}
+                onChange={(e) => isEditing && setDraft(prev => ({ ...prev, crp: e.target.value }))}
+                disabled={!isEditing}
                 placeholder="00/00000"
-                className="input-field"
+                className="input-field disabled:opacity-60"
               />
             </div>
 
@@ -162,10 +284,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </label>
               <input
                 type="text"
-                value={psychoInfo.specialty || ''}
-                onChange={(e) => setPsychoInfo(prev => ({ ...prev, specialty: e.target.value }))}
+                value={currentInfo.specialty || ''}
+                onChange={(e) => isEditing && setDraft(prev => ({ ...prev, specialty: e.target.value }))}
+                disabled={!isEditing}
                 placeholder="Ex: Psicólogo Clínico"
-                className="input-field"
+                className="input-field disabled:opacity-60"
               />
             </div>
           </div>
@@ -193,27 +316,20 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   type="text"
                   value={slug}
                   onChange={(e) => handleSlugChange(e.target.value)}
+                  disabled={!isEditing}
                   placeholder="seu-nome"
-                  className="flex-1 px-3 py-3 bg-transparent focus:outline-none text-sm"
+                  className="flex-1 px-3 py-3 bg-transparent focus:outline-none text-sm disabled:opacity-60"
                 />
               </div>
-              <button
-                onClick={handleSaveSlug}
-                disabled={!isSlugAvailable || slug.length < 3}
-                className="px-4 py-2 rounded-xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ 
-                  background: palette.hex, 
-                  color: 'white',
-                }}
-              >
-                Salvar
-              </button>
             </div>
-            {slug.length >= 3 && (
+            {isEditing && slug.length >= 3 && (
               <p className={`text-xs ml-1 ${isSlugAvailable ? 'text-emerald-500' : 'text-destructive'}`}>
-                {isSlugAvailable 
-                  ? '✓ URL disponível' 
-                  : '✗ URL já está em uso'}
+                {isSlugAvailable ? '✓ URL disponível' : '✗ URL já está em uso'}
+              </p>
+            )}
+            {isEditing && (
+              <p className="text-xs text-muted-foreground ml-1">
+                A URL é salva junto com o perfil.
               </p>
             )}
           </div>
@@ -225,30 +341,34 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             Plano
           </h3>
 
-          {psychoInfo.plan === 'mensal' ? (
+          {currentInfo.plan === 'mensal' ? (
             <div className="p-6 rounded-2xl bg-muted border-2 border-border relative overflow-hidden">
               <p className="text-2xl font-black">R$ 59,90<span className="text-xs font-bold opacity-40">/mês</span></p>
-              <button 
-                onClick={() => setPsychoInfo(prev => ({ ...prev, plan: 'anual' }))}
-                className="mt-4 text-[9px] font-black uppercase tracking-widest block"
-                style={{ color: palette.hex }}
-              >
-                Trocar para Anual (Economize)
-              </button>
+              {isEditing && (
+                <button
+                  onClick={() => setDraft(prev => ({ ...prev, plan: 'anual' }))}
+                  className="mt-4 text-[9px] font-black uppercase tracking-widest block"
+                  style={{ color: palette.hex }}
+                >
+                  Trocar para Anual (Economize)
+                </button>
+              )}
             </div>
           ) : (
-            <div 
+            <div
               className="p-6 rounded-2xl border-2 relative overflow-hidden text-white"
               style={{ background: palette.hex }}
             >
               <p className="text-2xl font-black">Anual Premium</p>
               <p className="text-sm opacity-80 mt-1">R$ 479,88/ano (R$ 39,99/mês)</p>
-              <button 
-                onClick={() => setPsychoInfo(prev => ({ ...prev, plan: 'mensal' }))}
-                className="mt-4 text-[9px] font-black uppercase tracking-widest text-white/80 block"
-              >
-                Trocar para Mensal
-              </button>
+              {isEditing && (
+                <button
+                  onClick={() => setDraft(prev => ({ ...prev, plan: 'mensal' }))}
+                  className="mt-4 text-[9px] font-black uppercase tracking-widest text-white/80 block"
+                >
+                  Trocar para Mensal
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -266,24 +386,26 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </label>
             <div className="flex gap-3">
               <button
-                onClick={() => setPsychoInfo(prev => ({ ...prev, theme: 'light' }))}
-                className={`flex-1 p-4 rounded-xl border-2 flex items-center justify-center gap-2 font-black text-sm transition-all ${
-                  psychoInfo.theme === 'light' 
-                    ? 'border-primary' 
+                onClick={() => isEditing && setDraft(prev => ({ ...prev, theme: 'light' }))}
+                disabled={!isEditing}
+                className={`flex-1 p-4 rounded-xl border-2 flex items-center justify-center gap-2 font-black text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+                  currentInfo.theme === 'light'
+                    ? 'border-primary'
                     : 'border-border text-muted-foreground'
                 }`}
-                style={psychoInfo.theme === 'light' ? { borderColor: palette.hex, color: palette.hex } : {}}
+                style={currentInfo.theme === 'light' ? { borderColor: palette.hex, color: palette.hex } : {}}
               >
                 <Icons.Sun /> Light
               </button>
               <button
-                onClick={() => setPsychoInfo(prev => ({ ...prev, theme: 'dark' }))}
-                className={`flex-1 p-4 rounded-xl border-2 flex items-center justify-center gap-2 font-black text-sm transition-all ${
-                  psychoInfo.theme === 'dark' 
-                    ? 'border-primary' 
+                onClick={() => isEditing && setDraft(prev => ({ ...prev, theme: 'dark' }))}
+                disabled={!isEditing}
+                className={`flex-1 p-4 rounded-xl border-2 flex items-center justify-center gap-2 font-black text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+                  currentInfo.theme === 'dark'
+                    ? 'border-primary'
                     : 'border-border text-muted-foreground'
                 }`}
-                style={psychoInfo.theme === 'dark' ? { borderColor: palette.hex, color: palette.hex } : {}}
+                style={currentInfo.theme === 'dark' ? { borderColor: palette.hex, color: palette.hex } : {}}
               >
                 <Icons.Moon /> Dark
               </button>
@@ -299,15 +421,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               {colors.map(color => (
                 <button
                   key={color}
-                  onClick={() => setPsychoInfo(prev => ({ ...prev, primaryColor: color }))}
-                  className={`w-12 h-12 rounded-full transition-all active-touch ${
-                    psychoInfo.primaryColor === color 
-                      ? 'ring-4 ring-offset-2 ring-offset-background' 
+                  onClick={() => isEditing && setDraft(prev => ({ ...prev, primaryColor: color }))}
+                  disabled={!isEditing}
+                  className={`w-12 h-12 rounded-full transition-all active-touch disabled:opacity-60 disabled:cursor-not-allowed ${
+                    currentInfo.primaryColor === color
+                      ? 'ring-4 ring-offset-2 ring-offset-background'
                       : ''
                   }`}
-                  style={{ 
+                  style={{
                     background: COLOR_PALETTES[color].hex,
-                    ...(psychoInfo.primaryColor === color && { boxShadow: `0 0 0 4px ${COLOR_PALETTES[color].hex}40` }),
+                    ...(currentInfo.primaryColor === color && { boxShadow: `0 0 0 4px ${COLOR_PALETTES[color].hex}40` }),
                   }}
                 />
               ))}

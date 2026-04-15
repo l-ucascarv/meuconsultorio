@@ -26,15 +26,13 @@ import {
   AvailabilitySettingsView,
   AnamnesisView,
   OnboardingTour,
-  ProfileOnboarding,
 } from '../components/psicodoc';
 import { useAuth } from '@/hooks/useAuth';
-import { ChangePasswordModal } from '@/components/psicodoc/ChangePasswordModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const PsicoDocApp: React.FC = () => {
-  const { user, profile, mustChangePassword, signOut, refreshProfile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
 
   // State
@@ -51,43 +49,16 @@ const PsicoDocApp: React.FC = () => {
   const [financialCategories, setFinancialCategories] = useState<FinancialCategory[]>([]);
   const [financialTransactions, setFinancialTransactions] = useState<FinancialTransaction[]>([]);
   const [showTour, setShowTour] = useState(false);
-  const [showProfileOnboarding, setShowProfileOnboarding] = useState(false);
 
   // Check if user needs onboarding tour
   useEffect(() => {
     if (user && !isLoading && profile) {
-      const onboardingKey = `onboarding_completed_${user.id}`;
-      const tourKey = `tour_completed_${user.id}`;
-      // Show profile onboarding if CRP is not set and onboarding not completed
-      if (!localStorage.getItem(onboardingKey) && !profile.crp) {
-        setShowProfileOnboarding(true);
-      } else if (!localStorage.getItem(tourKey)) {
-        setShowTour(true);
-      }
-    }
-  }, [user, isLoading, profile]);
-
-  const handleCompleteOnboarding = async (data: { crp: string; specialty: string }) => {
-    if (!user) return;
-    try {
-      await supabase.from('profiles').update({
-        crp: data.crp,
-        specialty: data.specialty || null,
-      }).eq('user_id', user.id);
-      
-      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
-      setShowProfileOnboarding(false);
-      await refreshProfile();
-      
-      // Now show tour
       const tourKey = `tour_completed_${user.id}`;
       if (!localStorage.getItem(tourKey)) {
         setShowTour(true);
       }
-    } catch (error) {
-      console.error('Error saving onboarding data:', error);
     }
-  };
+  }, [user, isLoading, profile]);
 
   const handleCompleteTour = () => {
     if (user) {
@@ -543,19 +514,8 @@ const PsicoDocApp: React.FC = () => {
 
   return (
     <div className={`min-h-screen w-full overflow-x-hidden flex flex-col md:flex-row transition-colors duration-300 ${themeClass}`}>
-      {/* Change Password Modal */}
-      <ChangePasswordModal isOpen={mustChangePassword} />
-
-      {/* Profile Onboarding (consent + CRP) */}
-      {showProfileOnboarding && !mustChangePassword && (
-        <ProfileOnboarding
-          primaryColor={psychoInfo.primaryColor}
-          onComplete={handleCompleteOnboarding}
-        />
-      )}
-
       {/* Onboarding Tour */}
-      {showTour && !mustChangePassword && !showProfileOnboarding && (
+      {showTour && (
         <OnboardingTour
           primaryColor={psychoInfo.primaryColor}
           onComplete={handleCompleteTour}

@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AnamnesisData, Patient, PrimaryColor } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
 import { Icons } from './Icons';
-import { PatientSearchSelect } from './PatientSearchSelect';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -72,11 +71,20 @@ export const AnamnesisView: React.FC<AnamnesisViewProps> = ({ patients, primaryC
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(selectedPatientId || '');
+  const [patientSearch, setPatientSearch] = useState('');
   const [data, setData] = useState<Omit<AnamnesisData, 'patientId' | 'patientName'>>(INITIAL_ANAMNESIS);
 
   const update = (field: keyof typeof data) => (value: string) => setData(prev => ({ ...prev, [field]: value }));
 
   const patient = patients.find(p => p.id === selectedPatient);
+
+  const filteredPatients = useMemo(() => {
+    if (!patientSearch.trim()) return patients;
+    const q = patientSearch.toLowerCase();
+    return patients.filter((p) => p.name.toLowerCase().includes(q));
+  }, [patients, patientSearch]);
+
+  const shouldScrollPatients = patients.length > 0 && filteredPatients.length > 6;
 
   const handleSave = async () => {
     if (!user || !selectedPatient || !patient) {
@@ -126,17 +134,64 @@ export const AnamnesisView: React.FC<AnamnesisViewProps> = ({ patients, primaryC
       </header>
 
       {/* Patient Selection with Search */}
-      <div className="card-elevated p-4 space-y-2">
+      <div className="card-elevated p-4 space-y-3">
         <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Paciente</label>
-        <PatientSearchSelect
-          patients={patients}
-          selectedPatient={selectedPatient}
-          onSelect={setSelectedPatient}
-          palette={palette}
-        />
+        {patients.length > 0 ? (
+          <>
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" aria-hidden="true">
+                <Icons.Search />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar por nome do paciente..."
+                value={patientSearch}
+                onChange={(e) => setPatientSearch(e.target.value)}
+                className="input-field"
+                style={{ paddingLeft: '3rem' }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground -mt-1">
+              Digite o nome para filtrar e toque no paciente para selecionar.
+            </p>
+
+            <div className={shouldScrollPatients ? "max-h-56 overflow-y-auto overscroll-contain" : ""}>
+              {filteredPatients.length === 0 ? (
+                <p className="text-xs text-muted-foreground p-3 text-center">Nenhum paciente encontrado</p>
+              ) : (
+                <div className="space-y-1">
+                  {filteredPatients.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setSelectedPatient(p.id)}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-muted transition-colors ${
+                        p.id === selectedPatient ? 'font-bold' : ''
+                      }`}
+                      style={p.id === selectedPatient ? { color: palette.hex } : {}}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="truncate">{p.name}</span>
+                        {p.id === selectedPatient && (
+                          <span className="shrink-0" aria-hidden="true">
+                            <Icons.Check />
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Nenhum paciente cadastrado. Cadastre um paciente primeiro para preencher a anamnese.
+          </p>
+        )}
       </div>
 
-      {selectedPatient && (
+      {patient && (
         <>
           {/* Seção 1 - Dados Pessoais */}
           <Section title="Dados Pessoais" icon={<Icons.User />} defaultOpen={true}>

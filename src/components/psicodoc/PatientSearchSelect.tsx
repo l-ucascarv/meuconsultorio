@@ -31,6 +31,9 @@ export const PatientSearchSelect: React.FC<PatientSearchSelectProps> = ({
 
   const selected = patients.find(p => p.id === selectedPatient);
 
+  const itemCount = (allowEmpty ? 1 : 0) + filtered.length;
+  const shouldScrollList = patients.length > 0 && itemCount > 6;
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -64,7 +67,7 @@ export const PatientSearchSelect: React.FC<PatientSearchSelectProps> = ({
               autoFocus
             />
           </div>
-          <div className="max-h-48 overflow-y-auto">
+          <div className={shouldScrollList ? "max-h-48 overflow-y-auto overscroll-contain" : ""}>
             {allowEmpty && (
               <button
                 onClick={() => { onSelect(''); setOpen(false); setSearch(''); }}
@@ -76,7 +79,9 @@ export const PatientSearchSelect: React.FC<PatientSearchSelectProps> = ({
                 {emptyLabel}
               </button>
             )}
-            {filtered.length === 0 ? (
+            {patients.length === 0 ? (
+              <p className="text-xs text-muted-foreground p-3 text-center">Nenhum paciente cadastrado</p>
+            ) : filtered.length === 0 ? (
               <p className="text-xs text-muted-foreground p-3 text-center">Nenhum paciente encontrado</p>
             ) : (
               filtered.map(p => (

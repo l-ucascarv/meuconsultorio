@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { lovable } from '@/integrations/lovable/index';
+import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 
@@ -9,12 +9,21 @@ const emailSchema = z.string().email('E-mail inválido');
 const passwordSchema = z.string().min(6, 'Senha deve ter pelo menos 6 caracteres');
 const nameSchema = z.string().min(2, 'Nome deve ter pelo menos 2 caracteres');
 
+const formatCRP = (value: string): string => {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  return digits.slice(0, 2) + '/' + digits.slice(2);
+};
+
 const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
+  const [crp, setCrp] = useState('');
+  const [specialty, setSpecialty] = useState('');
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string; crp?: string; consent?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   
   const { signIn, signUp, user, loading } = useAuth();
@@ -28,7 +37,7 @@ const Auth: React.FC = () => {
   }, [user, loading, navigate]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string; name?: string } = {};
+    const newErrors: { email?: string; password?: string; name?: string; crp?: string; consent?: string } = {};
     
     try {
       emailSchema.parse(email);
@@ -53,6 +62,16 @@ const Auth: React.FC = () => {
         if (e instanceof z.ZodError) {
           newErrors.name = e.errors[0].message;
         }
+      }
+
+      if (!crp.trim()) {
+        newErrors.crp = 'O CRP é obrigatório para profissionais de psicologia.';
+      } else if (crp.trim().length < 4) {
+        newErrors.crp = 'Informe um CRP válido (ex: 06/123456).';
+      }
+
+      if (!consentChecked) {
+        newErrors.consent = 'Você precisa autorizar o uso dos dados para criar a conta.';
       }
     }
     
@@ -91,7 +110,7 @@ const Auth: React.FC = () => {
           });
         }
       } else {
-        const { error } = await signUp(email, password, name);
+        const { error, userId } = await signUp(email, password, name, crp.trim(), specialty.trim());
         if (error) {
           if (error.message.includes('User already registered')) {
             toast({
@@ -107,6 +126,11 @@ const Auth: React.FC = () => {
             });
           }
         } else {
+          if (userId) {
+            localStorage.setItem(`data_consent_accepted_${userId}`, 'true');
+            localStorage.setItem(`onboarding_completed_${userId}`, 'true');
+          }
+
           toast({
             title: 'Verifique seu e-mail!',
             description: 'Enviamos um link de confirmação para ' + email + '. Confirme seu e-mail para ativar sua conta.',
@@ -116,6 +140,9 @@ const Auth: React.FC = () => {
           setEmail('');
           setPassword('');
           setName('');
+          setCrp('');
+          setSpecialty('');
+          setConsentChecked(false);
         }
       }
     } finally {
@@ -213,6 +240,74 @@ const Auth: React.FC = () => {
               )}
             </div>
 
+            {!isLogin && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">
+                  CRP (Obrigatório)
+                </label>
+                <input
+                  type="text"
+                  value={crp}
+                  onChange={(e) => setCrp(formatCRP(e.target.value))}
+                  placeholder="Ex: 06/123456"
+                  maxLength={9}
+                  className={`w-full px-4 py-3 rounded-xl border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all ${
+                    errors.crp ? 'border-destructive' : 'border-border'
+                  }`}
+                  disabled={isLoading}
+                />
+                {errors.crp && (
+                  <p className="text-destructive text-xs ml-1">{errors.crp}</p>
+                )}
+              </div>
+            )}
+
+            {!isLogin && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">
+                  Especialidade (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={specialty}
+                  onChange={(e) => setSpecialty(e.target.value)}
+                  placeholder="Ex: Psicologia Clínica"
+                  className="w-full px-4 py-3 rounded-xl border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all border-border"
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+
+            {!isLogin && (
+              <div className="space-y-2">
+                <div className="bg-muted rounded-xl p-4 text-xs text-muted-foreground space-y-2">
+                  <p className="font-semibold text-foreground text-sm">Autorização de uso de dados</p>
+                  <p>
+                    Para criar sua conta, precisamos do seu consentimento para usar seus dados (nome, e-mail, CRP e
+                    especialidade) conforme a LGPD.
+                  </p>
+                </div>
+
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={consentChecked}
+                    onChange={(e) => setConsentChecked(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-border accent-primary"
+                    disabled={isLoading}
+                  />
+                  <span className="text-xs text-foreground leading-relaxed">
+                    Li e concordo com os <strong>Termos de Uso</strong> e a <strong>Política de Privacidade</strong>,
+                    autorizando o uso dos meus dados.
+                  </span>
+                </label>
+
+                {errors.consent && (
+                  <p className="text-destructive text-xs ml-1">{errors.consent}</p>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isLoading}
@@ -246,8 +341,12 @@ const Auth: React.FC = () => {
           <button
             type="button"
             onClick={async () => {
-              const { error } = await lovable.auth.signInWithOAuth("google", {
-                redirect_uri: window.location.origin,
+              const redirectTo = `${window.location.origin}/auth/callback`;
+              const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                  redirectTo,
+                },
               });
               if (error) {
                 toast({

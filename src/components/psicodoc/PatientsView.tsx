@@ -53,7 +53,10 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
         <h2 className="text-xl md:text-3xl font-black">Pacientes</h2>
         <div className="flex w-full items-center gap-2 md:w-auto md:flex-none md:gap-3">
           <div className="relative flex-1 min-w-0 md:w-64">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <div
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+              aria-hidden="true"
+            >
               <Icons.Search />
             </div>
             <input
@@ -61,7 +64,8 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
               placeholder="Buscar paciente..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="input-field pl-10"
+              className="input-field"
+              style={{ paddingLeft: '3rem' }}
             />
           </div>
           <button 
