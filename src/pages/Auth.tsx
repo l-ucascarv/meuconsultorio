@@ -19,11 +19,12 @@ const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [crp, setCrp] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [consentChecked, setConsentChecked] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string; crp?: string; consent?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; name?: string; crp?: string; consent?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   
   const { signIn, signUp, user, loading } = useAuth();
@@ -37,7 +38,7 @@ const Auth: React.FC = () => {
   }, [user, loading, navigate]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string; name?: string; crp?: string; consent?: string } = {};
+    const newErrors: { email?: string; password?: string; confirmPassword?: string; name?: string; crp?: string; consent?: string } = {};
     
     try {
       emailSchema.parse(email);
@@ -62,6 +63,10 @@ const Auth: React.FC = () => {
         if (e instanceof z.ZodError) {
           newErrors.name = e.errors[0].message;
         }
+      }
+
+      if (password !== confirmPassword) {
+        newErrors.confirmPassword = 'As senhas não coincidem.';
       }
 
       if (!crp.trim()) {
@@ -139,6 +144,7 @@ const Auth: React.FC = () => {
           setIsLogin(true);
           setEmail('');
           setPassword('');
+          setConfirmPassword('');
           setName('');
           setCrp('');
           setSpecialty('');
@@ -239,6 +245,27 @@ const Auth: React.FC = () => {
                 <p className="text-destructive text-xs ml-1">{errors.password}</p>
               )}
             </div>
+
+            {!isLogin && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">
+                  Confirmar Senha
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className={`w-full px-4 py-3 rounded-xl border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all ${
+                    errors.confirmPassword ? 'border-destructive' : 'border-border'
+                  }`}
+                  disabled={isLoading}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-destructive text-xs ml-1">{errors.confirmPassword}</p>
+                )}
+              </div>
+            )}
 
             {!isLogin && (
               <div className="space-y-2">

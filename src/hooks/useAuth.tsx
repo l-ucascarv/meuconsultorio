@@ -257,37 +257,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password,
         options: {
           emailRedirectTo: redirectUrl,
+          data: {
+            full_name: name,
+            crp: crp || null,
+            specialty: specialty || null,
+          },
         },
       });
 
       if (error) throw error;
-
-      // Create profile after signup
-      if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          user_id: data.user.id,
-          email: email,
-          name: name,
-          crp: crp,
-          specialty: specialty || null,
-          must_change_password: false,
-          subscription_status: 'trial',
-        });
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-        }
-
-        // Assign subscriber role
-        const { error: roleError } = await supabase.from('user_roles').insert({
-          user_id: data.user.id,
-          role: 'subscriber',
-        });
-
-        if (roleError) {
-          console.error('Error assigning role:', roleError);
-        }
-      }
 
       return { error: null, userId: data.user?.id };
     } catch (error) {
