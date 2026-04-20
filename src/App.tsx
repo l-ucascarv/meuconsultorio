@@ -101,6 +101,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       <ProfileOnboarding
         primaryColor={(profile.primary_color as any) || 'indigo'}
         requirePassword={mustChangePassword}
+        showPasswordFields
         skipConsent={consentAccepted}
         initialCrp={profile.crp || ''}
         initialSpecialty={profile.specialty || ''}
