@@ -15,7 +15,7 @@ import AdminPanel from "./pages/AdminPanel";
 import UserLogin from "./pages/UserLogin";
 import PublicBooking from "./pages/PublicBooking";
 import Checkout from "./pages/Checkout";
-import CheckoutResult from "./pages/CheckoutResult";
+import CheckoutReturn from "./pages/CheckoutReturn";
 import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 
@@ -208,8 +208,7 @@ const AppRoutes = () => {
       <Route path="/auth" element={<Auth />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/checkout" element={<Checkout />} />
-      <Route path="/checkout/sucesso" element={<CheckoutResult variant="success" />} />
-      <Route path="/checkout/pendente" element={<CheckoutResult variant="pending" />} />
+      <Route path="/checkout/return" element={<CheckoutReturn />} />
       <Route
         path="/assinatura"
         element={
