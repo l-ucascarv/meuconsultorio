@@ -6,8 +6,11 @@ verify_jwt = false
 [functions.public-booking]
 verify_jwt = false
 
-[functions.mp-webhook]
+[functions.payments-webhook]
 verify_jwt = false
 
-[functions.mp-create-checkout]
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.create-portal-session]
 verify_jwt = false
