@@ -38,10 +38,10 @@ const PricingSection: React.FC = () => {
             ))}
           </ul>
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/checkout')}
             className="w-full py-3 border-2 border-primary text-primary font-bold rounded-xl hover:bg-primary hover:text-primary-foreground transition-all"
           >
-            Começar Grátis
+            Assinar Inicial
           </button>
         </div>
 
@@ -72,7 +72,7 @@ const PricingSection: React.FC = () => {
             ))}
           </ul>
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/checkout')}
             className="w-full py-3 bg-white text-primary font-bold rounded-xl hover:opacity-90 transition-all"
           >
             Assinar Agora
