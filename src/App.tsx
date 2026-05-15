@@ -48,6 +48,20 @@ const NotFoundOrRedirect = () => {
   return <NotFound />;
 };
 
+// Authenticated route without subscription gate (for /assinatura)
+const AuthOnlyRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
+};
+
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, profile, mustChangePassword, updatePassword, refreshProfile, signOut } = useAuth();
@@ -199,9 +213,9 @@ const AppRoutes = () => {
       <Route
         path="/assinatura"
         element={
-          <ProtectedRoute>
+          <AuthOnlyRoute>
             <Subscription />
-          </ProtectedRoute>
+          </AuthOnlyRoute>
         }
       />
       <Route 
