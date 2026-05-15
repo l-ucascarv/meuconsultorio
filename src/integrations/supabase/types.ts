@@ -334,6 +334,53 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_logs: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string | null
+          id: string
+          mp_payment_id: string
+          paid_at: string | null
+          raw: Json | null
+          status: string
+          subscription_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          mp_payment_id: string
+          paid_at?: string | null
+          raw?: Json | null
+          status: string
+          subscription_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          mp_payment_id?: string
+          paid_at?: string | null
+          raw?: Json | null
+          status?: string
+          subscription_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_logs_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -504,6 +551,7 @@ export type Database = {
           is_active: boolean | null
           max_documents_per_month: number | null
           max_patients: number | null
+          mercadopago_plan_id: string | null
           name: string
           price_monthly: number
           price_yearly: number | null
@@ -517,6 +565,7 @@ export type Database = {
           is_active?: boolean | null
           max_documents_per_month?: number | null
           max_patients?: number | null
+          mercadopago_plan_id?: string | null
           name: string
           price_monthly?: number
           price_yearly?: number | null
@@ -530,12 +579,72 @@ export type Database = {
           is_active?: boolean | null
           max_documents_per_month?: number | null
           max_patients?: number | null
+          mercadopago_plan_id?: string | null
           name?: string
           price_monthly?: number
           price_yearly?: number | null
           updated_at?: string
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at: string | null
+          cancelled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          mp_payer_email: string | null
+          mp_payer_id: string | null
+          mp_preapproval_id: string | null
+          plan_id: string | null
+          status: Database["public"]["Enums"]["subscription_state"]
+          trial_ends_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          mp_payer_email?: string | null
+          mp_payer_id?: string | null
+          mp_preapproval_id?: string | null
+          plan_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_state"]
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          mp_payer_email?: string | null
+          mp_payer_id?: string | null
+          mp_preapproval_id?: string | null
+          plan_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_state"]
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -555,6 +664,42 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          error: string | null
+          event_type: string | null
+          id: string
+          mp_resource_id: string | null
+          payload: Json | null
+          processed: boolean | null
+          provider: string
+          received_at: string
+          signature_valid: boolean | null
+        }
+        Insert: {
+          error?: string | null
+          event_type?: string | null
+          id?: string
+          mp_resource_id?: string | null
+          payload?: Json | null
+          processed?: boolean | null
+          provider?: string
+          received_at?: string
+          signature_valid?: boolean | null
+        }
+        Update: {
+          error?: string | null
+          event_type?: string | null
+          id?: string
+          mp_resource_id?: string | null
+          payload?: Json | null
+          processed?: boolean | null
+          provider?: string
+          received_at?: string
+          signature_valid?: boolean | null
         }
         Relationships: []
       }
@@ -585,6 +730,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "subscriber"
+      subscription_state:
+        | "pending"
+        | "trial"
+        | "active"
+        | "past_due"
+        | "cancelled"
+        | "expired"
       subscription_status:
         | "active"
         | "inactive"
@@ -720,6 +872,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "subscriber"],
+      subscription_state: [
+        "pending",
+        "trial",
+        "active",
+        "past_due",
+        "cancelled",
+        "expired",
+      ],
       subscription_status: [
         "active",
         "inactive",
