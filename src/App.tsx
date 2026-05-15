@@ -14,6 +14,9 @@ import PsicoDocApp from "./pages/PsicoDocApp";
 import AdminPanel from "./pages/AdminPanel";
 import UserLogin from "./pages/UserLogin";
 import PublicBooking from "./pages/PublicBooking";
+import Checkout from "./pages/Checkout";
+import CheckoutResult from "./pages/CheckoutResult";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -190,6 +193,17 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/checkout/sucesso" element={<CheckoutResult variant="success" />} />
+      <Route path="/checkout/pendente" element={<CheckoutResult variant="pending" />} />
+      <Route
+        path="/assinatura"
+        element={
+          <ProtectedRoute>
+            <Subscription />
+          </ProtectedRoute>
+        }
+      />
       <Route 
         path="/app" 
         element={
