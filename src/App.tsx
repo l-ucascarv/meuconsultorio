@@ -14,6 +14,9 @@ import PsicoDocApp from "./pages/PsicoDocApp";
 import AdminPanel from "./pages/AdminPanel";
 import UserLogin from "./pages/UserLogin";
 import PublicBooking from "./pages/PublicBooking";
+import Checkout from "./pages/Checkout";
+import CheckoutResult from "./pages/CheckoutResult";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +46,20 @@ const NotFoundOrRedirect = () => {
   }
 
   return <NotFound />;
+};
+
+// Authenticated route without subscription gate (for /assinatura)
+const AuthOnlyRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
 };
 
 // Protected route wrapper
@@ -190,6 +207,17 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/checkout/sucesso" element={<CheckoutResult variant="success" />} />
+      <Route path="/checkout/pendente" element={<CheckoutResult variant="pending" />} />
+      <Route
+        path="/assinatura"
+        element={
+          <AuthOnlyRoute>
+            <Subscription />
+          </AuthOnlyRoute>
+        }
+      />
       <Route 
         path="/app" 
         element={
