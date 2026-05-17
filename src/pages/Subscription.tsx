@@ -25,7 +25,7 @@ const Subscription = () => {
     document.title = "Minha Assinatura — Meu Consultório";
     if (!user) return;
     (async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("subscriptions")
         .select("id,status,current_period_end,cancel_at_period_end,price_id")
         .eq("user_id", user.id)
