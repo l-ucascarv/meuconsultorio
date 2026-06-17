@@ -15,6 +15,7 @@ interface Profile {
   subscription_status: 'active' | 'inactive' | 'pending' | 'cancelled' | 'trial';
   subscription_plan: string | null;
   must_change_password: boolean;
+  lgpd_consent_at?: string | null;
 }
 
 // Augment with optional lgpd consent timestamp (added via migration).
