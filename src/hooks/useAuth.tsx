@@ -17,6 +17,9 @@ interface Profile {
   must_change_password: boolean;
 }
 
+// Augment with optional lgpd consent timestamp (added via migration).
+// Declared outside the main interface for clarity.
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
