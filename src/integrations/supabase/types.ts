@@ -340,6 +340,7 @@ export type Database = {
           crp: string | null
           email: string
           id: string
+          lgpd_consent_at: string | null
           must_change_password: boolean | null
           name: string | null
           primary_color: string | null
@@ -358,6 +359,7 @@ export type Database = {
           crp?: string | null
           email: string
           id?: string
+          lgpd_consent_at?: string | null
           must_change_password?: boolean | null
           name?: string | null
           primary_color?: string | null
@@ -376,6 +378,7 @@ export type Database = {
           crp?: string | null
           email?: string
           id?: string
+          lgpd_consent_at?: string | null
           must_change_password?: boolean | null
           name?: string | null
           primary_color?: string | null

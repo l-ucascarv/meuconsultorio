@@ -108,9 +108,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Gate: só libera o app após consentimento + CRP + (se necessário) definição de senha.
+  // Gate: só libera o app após consentimento LGPD (1x, persistido no banco)
+  // + CRP + (se necessário) definição de senha.
   const consentKey = `data_consent_accepted_${user.id}`;
-  const consentAccepted = localStorage.getItem(consentKey) === 'true';
+  const consentAccepted =
+    !!profile.lgpd_consent_at || localStorage.getItem(consentKey) === 'true';
   const needsGate = mustChangePassword || !profile.crp || !consentAccepted;
 
   if (needsGate) {
@@ -144,6 +146,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
               .update({
                 crp,
                 specialty: specialty || null,
+                // Registra o aceite LGPD uma única vez (não sobrescreve se já existir).
+                ...(profile.lgpd_consent_at
+                  ? {}
+                  : { lgpd_consent_at: new Date().toISOString() }),
               })
               .eq('user_id', user.id);
 
