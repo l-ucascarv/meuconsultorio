@@ -221,6 +221,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     sessionExpiryTimeoutRef.current = window.setTimeout(() => {
+      try {
+        toast({
+          title: 'Sessão expirada',
+          description: 'Por segurança, faça login novamente.',
+        });
+      } catch {
+        // toast may be unavailable during unmount
+      }
       void supabase.auth.signOut();
     }, msUntilExpire);
 
