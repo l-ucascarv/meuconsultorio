@@ -136,6 +136,7 @@ export const useAppointments = (
             ...a,
             date: updates.date || a.date,
             time: updates.time || a.time,
+            notes: updates.notes !== undefined ? updates.notes : a.notes,
           };
         });
         return updated.sort((a, b) => {

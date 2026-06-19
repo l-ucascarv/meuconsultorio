@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface Profile {
   id: string;
@@ -221,6 +222,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     sessionExpiryTimeoutRef.current = window.setTimeout(() => {
+      try {
+        toast('Sessão expirada', {
+          description: 'Por segurança, faça login novamente.',
+        });
+      } catch {
+        // toast may be unavailable during unmount
+      }
       void supabase.auth.signOut();
     }, msUntilExpire);
 

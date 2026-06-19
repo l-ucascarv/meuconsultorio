@@ -116,7 +116,7 @@ export const AvailabilitySettingsView: React.FC<AvailabilitySettingsViewProps> =
           .from('booking_config')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (configData) {
           setConfig({
