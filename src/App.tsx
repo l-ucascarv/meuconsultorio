@@ -14,9 +14,6 @@ import PsicoDocApp from "./pages/PsicoDocApp";
 import AdminPanel from "./pages/AdminPanel";
 import UserLogin from "./pages/UserLogin";
 import PublicBooking from "./pages/PublicBooking";
-import Checkout from "./pages/Checkout";
-import CheckoutReturn from "./pages/CheckoutReturn";
-import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,20 +43,6 @@ const NotFoundOrRedirect = () => {
   }
 
   return <NotFound />;
-};
-
-// Authenticated route without subscription gate (for /assinatura)
-const AuthOnlyRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-  if (!user) return <Navigate to="/auth" replace />;
-  return <>{children}</>;
 };
 
 // Protected route wrapper
@@ -108,11 +91,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Gate: só libera o app após consentimento LGPD (1x, persistido no banco)
-  // + CRP + (se necessário) definição de senha.
+  // Gate: só libera o app após consentimento + CRP + (se necessário) definição de senha.
   const consentKey = `data_consent_accepted_${user.id}`;
-  const consentAccepted =
-    !!profile.lgpd_consent_at || localStorage.getItem(consentKey) === 'true';
+  const consentAccepted = localStorage.getItem(consentKey) === 'true';
   const needsGate = mustChangePassword || !profile.crp || !consentAccepted;
 
   if (needsGate) {
@@ -120,7 +101,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       <ProfileOnboarding
         primaryColor={(profile.primary_color as any) || 'indigo'}
         requirePassword={mustChangePassword}
-        showPasswordFields
         skipConsent={consentAccepted}
         initialCrp={profile.crp || ''}
         initialSpecialty={profile.specialty || ''}
@@ -146,10 +126,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
               .update({
                 crp,
                 specialty: specialty || null,
-                // Registra o aceite LGPD uma única vez (não sobrescreve se já existir).
-                ...(profile.lgpd_consent_at
-                  ? {}
-                  : { lgpd_consent_at: new Date().toISOString() }),
               })
               .eq('user_id', user.id);
 
@@ -213,16 +189,6 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/checkout" element={<Checkout />} />
-      <Route path="/checkout/return" element={<CheckoutReturn />} />
-      <Route
-        path="/assinatura"
-        element={
-          <AuthOnlyRoute>
-            <Subscription />
-          </AuthOnlyRoute>
-        }
-      />
       <Route 
         path="/app" 
         element={

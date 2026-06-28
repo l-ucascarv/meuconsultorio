@@ -1,4 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -210,22 +211,22 @@ serve(async (req) => {
     );
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError || !userData?.user) {
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: 'Não autorizado.' }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = userData.user.id;
+    const userId = claimsData.claims.sub;
 
     // Fetch profile from database (server-side, not client-controlled)
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('name, crp, specialty, subscription_status')
       .eq('user_id', userId)
-      .maybeSingle();
+      .single();
 
     if (profileError || !profile) {
       return new Response(JSON.stringify({ error: 'Perfil não encontrado.' }), {

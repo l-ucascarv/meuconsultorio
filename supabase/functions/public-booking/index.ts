@@ -148,7 +148,7 @@ async function handleGetSlots(req: Request, supabase: any) {
     .eq("user_id", profile.user_id)
     .eq("day_of_week", dayOfWeek)
     .eq("is_active", true)
-    .maybeSingle();
+    .single();
 
   if (!daySetting) return json({ ...baseInfo, slots: [] });
 
@@ -233,7 +233,7 @@ async function handleCreateBooking(req: Request, supabase: any) {
     .from("booking_config")
     .select("*")
     .eq("user_id", userId)
-    .maybeSingle();
+    .single();
 
   if (!config || !config.booking_enabled) {
     return json({ error: "Agendamento online não disponível" }, 400);

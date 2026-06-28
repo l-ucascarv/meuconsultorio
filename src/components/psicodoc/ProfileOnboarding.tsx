@@ -19,7 +19,6 @@ const passwordSchema = z
 interface ProfileOnboardingProps {
   primaryColor: string;
   requirePassword?: boolean;
-  showPasswordFields?: boolean;
   skipConsent?: boolean;
   initialCrp?: string;
   initialSpecialty?: string;
@@ -31,7 +30,6 @@ type Step = "consent" | "professional";
 export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
   primaryColor,
   requirePassword = false,
-  showPasswordFields = false,
   skipConsent = false,
   initialCrp = "",
   initialSpecialty = "",
@@ -65,9 +63,8 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
 
   const handleSubmit = () => {
     const newErrors: { crp?: string; password?: string; confirm?: string } = {};
-    const shouldValidatePassword = requirePassword || password.length > 0 || confirmPassword.length > 0;
 
-    if (shouldValidatePassword) {
+    if (requirePassword) {
       try {
         passwordSchema.parse(password);
       } catch (e) {
@@ -93,7 +90,7 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
       onComplete({
         crp: crp.trim(),
         specialty: specialty.trim(),
-        password: shouldValidatePassword ? password : undefined,
+        password: requirePassword ? password : undefined,
       });
     }
   };
@@ -192,7 +189,7 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
 
           {step === "professional" && (
             <div className="space-y-4">
-              {showPasswordFields && (
+              {requirePassword && (
                 <>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">

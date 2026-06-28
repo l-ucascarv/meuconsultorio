@@ -250,7 +250,7 @@ const AdminPanel: React.FC = () => {
 
       toast({
         title: 'Usuário criado!',
-        description: `${newUserForm.name} foi criado com sucesso. Compartilhe a senha temporária com o usuário por canal seguro.`,
+        description: `${newUserForm.name} foi criado com sucesso. Senha temporária: ${newUserForm.password}`,
       });
 
       // Reload users
