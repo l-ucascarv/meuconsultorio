@@ -127,8 +127,11 @@ const Auth: React.FC = () => {
           }
         } else {
           if (userId) {
-            localStorage.setItem(`data_consent_accepted_${userId}`, 'true');
-            localStorage.setItem(`onboarding_completed_${userId}`, 'true');
+            // Consentimento já foi marcado no formulário de cadastro: persiste no banco.
+            await supabase
+              .from('profiles')
+              .update({ consent_accepted: true })
+              .eq('user_id', userId);
           }
 
           toast({
