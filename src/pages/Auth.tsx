@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { lovable } from '@/integrations/lovable';
+import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 
