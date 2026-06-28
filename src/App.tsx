@@ -92,8 +92,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   // Gate: só libera o app após consentimento + CRP + (se necessário) definição de senha.
-  const consentKey = `data_consent_accepted_${user.id}`;
-  const consentAccepted = localStorage.getItem(consentKey) === 'true';
+  // Persistido no banco para aparecer apenas no PRIMEIRO login do usuário.
+  const consentAccepted = profile.consent_accepted === true;
   const needsGate = mustChangePassword || !profile.crp || !consentAccepted;
 
   if (needsGate) {
@@ -106,9 +106,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         initialSpecialty={profile.specialty || ''}
         onComplete={async ({ crp, specialty, password }) => {
           try {
-            // Consentimento foi aceito ao concluir o fluxo.
-            localStorage.setItem(consentKey, 'true');
-
             if (password) {
               const { error: pwError } = await updatePassword(password);
               if (pwError) {
@@ -126,6 +123,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
               .update({
                 crp,
                 specialty: specialty || null,
+                consent_accepted: true,
               })
               .eq('user_id', user.id);
 
@@ -138,8 +136,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
               return;
             }
 
-            // Marca como concluído no dispositivo (usado para tour e para pular telas repetidas)
-            localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
             await refreshProfile();
           } catch (e) {
             const message = e instanceof Error ? e.message : String(e);

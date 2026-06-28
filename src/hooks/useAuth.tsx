@@ -15,6 +15,8 @@ interface Profile {
   subscription_status: 'active' | 'inactive' | 'pending' | 'cancelled' | 'trial';
   subscription_plan: string | null;
   must_change_password: boolean;
+  consent_accepted: boolean;
+  tour_completed: boolean;
 }
 
 interface AuthContextType {

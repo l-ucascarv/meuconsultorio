@@ -50,21 +50,21 @@ const PsicoDocApp: React.FC = () => {
   const [financialTransactions, setFinancialTransactions] = useState<FinancialTransaction[]>([]);
   const [showTour, setShowTour] = useState(false);
 
-  // Check if user needs onboarding tour
+  // Check if user needs onboarding tour (apenas no primeiro login — persistido no banco)
   useEffect(() => {
-    if (user && !isLoading && profile) {
-      const tourKey = `tour_completed_${user.id}`;
-      if (!localStorage.getItem(tourKey)) {
-        setShowTour(true);
-      }
+    if (user && !isLoading && profile && profile.tour_completed === false) {
+      setShowTour(true);
     }
   }, [user, isLoading, profile]);
 
-  const handleCompleteTour = () => {
-    if (user) {
-      localStorage.setItem(`tour_completed_${user.id}`, 'true');
-    }
+  const handleCompleteTour = async () => {
     setShowTour(false);
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({ tour_completed: true })
+        .eq('user_id', user.id);
+    }
   };
 
   useEffect(() => {
