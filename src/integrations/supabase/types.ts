@@ -336,6 +336,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          consent_accepted: boolean
           created_at: string
           crp: string | null
           email: string
@@ -351,10 +352,12 @@ export type Database = {
             | Database["public"]["Enums"]["subscription_status"]
             | null
           theme: string | null
+          tour_completed: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
+          consent_accepted?: boolean
           created_at?: string
           crp?: string | null
           email: string
@@ -370,10 +373,12 @@ export type Database = {
             | Database["public"]["Enums"]["subscription_status"]
             | null
           theme?: string | null
+          tour_completed?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
+          consent_accepted?: boolean
           created_at?: string
           crp?: string | null
           email?: string
@@ -389,6 +394,7 @@ export type Database = {
             | Database["public"]["Enums"]["subscription_status"]
             | null
           theme?: string | null
+          tour_completed?: boolean
           updated_at?: string
           user_id?: string
         }
