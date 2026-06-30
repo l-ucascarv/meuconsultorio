@@ -160,6 +160,13 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
       `${generatedDoc.analysis ? '5.' : '2.'} CONCLUSÃO`,
       generatedDoc.conclusion,
       '',
+    );
+
+    if (generatedDoc.missingItems && generatedDoc.missingItems.trim()) {
+      sections.push('[ITENS AUSENTES PARA REVISÃO]', generatedDoc.missingItems, '');
+    }
+
+    sections.push(
       '---',
       `${reportData.city}, ${new Date(reportData.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`,
       '',
