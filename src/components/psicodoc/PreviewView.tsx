@@ -295,6 +295,15 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
             </h2>
             <div className="whitespace-pre-wrap">{generatedDoc.conclusion}</div>
           </section>
+
+          {generatedDoc.missingItems && generatedDoc.missingItems.trim() && (
+            <section className="mt-6 p-4 border border-dashed border-amber-500/60 rounded-xl bg-amber-50/40">
+              <h2 className="font-black uppercase text-xs tracking-widest text-amber-700 mb-3">
+                [Itens ausentes para revisão]
+              </h2>
+              <div className="whitespace-pre-wrap text-sm">{generatedDoc.missingItems}</div>
+            </section>
+          )}
         </div>
 
         {/* Footer / Signature */}
