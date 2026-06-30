@@ -58,14 +58,45 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${generatedDoc.title || DOC_DEFINITIONS[reportData.type].label}</title>
   <style>
-    body { font-family: 'Times New Roman', serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.8; color: #1a1a1a; }
-    h1 { text-align: center; font-size: 1.5em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
-    .subtitle { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 40px; }
-    h2 { font-size: 0.85em; text-transform: uppercase; letter-spacing: 3px; color: #666; margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-    .content { white-space: pre-wrap; text-align: justify; }
-    .footer { margin-top: 60px; text-align: center; border-top: 1px solid #333; padding-top: 20px; }
-    .signature { width: 200px; border-top: 1px solid #333; margin: 30px auto 10px; }
-    @media print { body { margin: 0; padding: 20mm; } }
+    /* Formatação ABNT (NBR 14724) */
+    @page { size: A4; margin: 3cm 2cm 2cm 3cm; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      color: #000;
+      background: #fff;
+      max-width: 16cm;
+      margin: 3cm auto 2cm auto;
+      padding: 0 2cm 0 3cm;
+      text-align: justify;
+    }
+    h1 {
+      text-align: center;
+      font-size: 12pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 0 0 24pt 0;
+      line-height: 1.5;
+    }
+    h2 {
+      font-size: 12pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      text-align: left;
+      margin: 18pt 0 12pt 0;
+    }
+    .content {
+      white-space: pre-wrap;
+      text-align: justify;
+      text-indent: 1.25cm;
+      line-height: 1.5;
+      margin: 0 0 12pt 0;
+    }
+    .footer { margin-top: 36pt; text-align: center; }
+    .footer p { margin: 0; line-height: 1.5; }
+    .signature { width: 7cm; border-top: 1px solid #000; margin: 48pt auto 6pt; }
+    @media print { body { margin: 0; padding: 0; max-width: none; } }
   </style>
 </head>
 <body>
