@@ -112,7 +112,8 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
   
   <h2>${generatedDoc.analysis ? '5.' : '2.'} Conclusão</h2>
   <div class="content">${generatedDoc.conclusion}</div>
-  
+  ${generatedDoc.missingItems && generatedDoc.missingItems.trim() ? `<h2>[Itens ausentes para revisão]</h2><div class="content">${generatedDoc.missingItems}</div>` : ''}
+
   <div class="footer">
     <p>${reportData.city}, ${new Date(reportData.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
     <div class="signature"></div>
@@ -159,6 +160,13 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
       `${generatedDoc.analysis ? '5.' : '2.'} CONCLUSÃO`,
       generatedDoc.conclusion,
       '',
+    );
+
+    if (generatedDoc.missingItems && generatedDoc.missingItems.trim()) {
+      sections.push('[ITENS AUSENTES PARA REVISÃO]', generatedDoc.missingItems, '');
+    }
+
+    sections.push(
       '---',
       `${reportData.city}, ${new Date(reportData.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`,
       '',
@@ -295,6 +303,15 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
             </h2>
             <div className="whitespace-pre-wrap">{generatedDoc.conclusion}</div>
           </section>
+
+          {generatedDoc.missingItems && generatedDoc.missingItems.trim() && (
+            <section className="mt-6 p-4 border border-dashed border-amber-500/60 rounded-xl bg-amber-50/40">
+              <h2 className="font-black uppercase text-xs tracking-widest text-amber-700 mb-3">
+                [Itens ausentes para revisão]
+              </h2>
+              <div className="whitespace-pre-wrap text-sm">{generatedDoc.missingItems}</div>
+            </section>
+          )}
         </div>
 
         {/* Footer / Signature */}
