@@ -260,21 +260,32 @@
     border: none !important;
     border-radius: 0 !important;
     margin: 0 !important;
-    padding: 20mm !important;
+    padding: 0 !important;
     max-width: none !important;
     font-family: 'Times New Roman', serif !important;
+    font-size: 12pt !important;
+    color: #000 !important;
     z-index: 99999 !important;
   }
 
   .print-document h1 {
-    font-size: 18pt !important;
-    margin-bottom: 10pt !important;
+    font-size: 12pt !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    text-transform: uppercase !important;
+    letter-spacing: normal !important;
+    line-height: 1.5 !important;
+    margin: 0 0 24pt 0 !important;
   }
 
   .print-document h2 {
-    font-size: 11pt !important;
-    margin-top: 16pt !important;
-    margin-bottom: 8pt !important;
+    font-size: 12pt !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    letter-spacing: normal !important;
+    color: #000 !important;
+    text-align: left !important;
+    margin: 18pt 0 12pt 0 !important;
   }
 
   .print-document section {
@@ -283,8 +294,9 @@
 
   .print-document .whitespace-pre-wrap {
     text-align: justify;
-    line-height: 1.8;
+    line-height: 1.5;
     font-size: 12pt;
+    text-indent: 1.25cm;
   }
 
   .print-document > div:last-child {
@@ -300,6 +312,6 @@
   /* Remove browser-generated headers/footers (URL, date, title) */
   @page {
     size: A4;
-    margin: 20mm;
+    margin: 3cm 2cm 2cm 3cm;
   }
 }
