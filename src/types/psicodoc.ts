@@ -74,6 +74,7 @@ export interface GeneratedReport {
   procedure?: string;
   analysis?: string;
   conclusion: string;
+  missingItems?: string;
 }
 
 export type AppView = 'home' | 'create' | 'preview' | 'history' | 'profile' | 'agenda' | 'patients' | 'patient_folder' | 'financial' | 'availability' | 'anamnesis';
