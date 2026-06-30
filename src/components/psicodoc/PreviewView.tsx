@@ -112,7 +112,8 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
   
   <h2>${generatedDoc.analysis ? '5.' : '2.'} Conclusão</h2>
   <div class="content">${generatedDoc.conclusion}</div>
-  
+  ${generatedDoc.missingItems && generatedDoc.missingItems.trim() ? `<h2>[Itens ausentes para revisão]</h2><div class="content">${generatedDoc.missingItems}</div>` : ''}
+
   <div class="footer">
     <p>${reportData.city}, ${new Date(reportData.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
     <div class="signature"></div>
