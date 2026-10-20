@@ -249,6 +249,19 @@ serve(async (req) => {
       });
     }
 
+    // Rate limit por usuário: máx. 30 documentos por hora
+    const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recent } = await admin.from('security_events').select('id', { count: 'exact', head: true })
+      .eq('user_id', userId).eq('event_type', 'document_generated').gte('created_at', since);
+    if ((recent ?? 0) >= 30) {
+      return new Response(JSON.stringify({ error: 'Limite de documentos por hora atingido. Tente novamente mais tarde.' }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    await admin.from('security_events').insert({ user_id: userId, event_type: 'document_generated' });
+
     // Validate input
     const rawData = await req.json();
     const validation = validateRequest(rawData);
