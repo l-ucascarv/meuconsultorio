@@ -471,6 +471,36 @@ export type Database = {
           },
         ]
       }
+      security_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          email: string | null
+          event_type: string
+          id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          email?: string | null
+          event_type: string
+          id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          email?: string | null
+          event_type?: string
+          id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       service_types: {
         Row: {
           created_at: string
@@ -645,6 +675,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      login_is_locked: { Args: { p_email: string }; Returns: boolean }
+      register_failed_login: { Args: { p_email: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "subscriber"
