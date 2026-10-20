@@ -439,12 +439,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
         </div>
 
+        <MfaSettings />
+
         {/* Logout */}
         <div className="mt-6 pt-4 border-t border-border space-y-3">
           <button
             onClick={async () => {
-              const { signOut } = await import('@/hooks/useAuth').then(() => ({ signOut: async () => { await supabase.auth.signOut(); } }));
-              await supabase.auth.signOut();
+              await signOut();
               window.location.href = '/';
             }}
             className="w-full py-3 rounded-xl font-bold text-sm transition-all border-2 border-border text-foreground hover:bg-muted flex items-center justify-center gap-2"
