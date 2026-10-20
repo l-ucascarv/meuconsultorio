@@ -1,3 +1,4 @@
+import { MfaSettings } from './MfaSettings';
 import { friendlyError } from '@/lib/friendlyError';
 import React, { useMemo, useState, useEffect } from 'react';
 import { PsychologistInfo, PrimaryColor, SubscriptionPlan } from '../../types/psicodoc';

@@ -1,3 +1,4 @@
+import { MfaChallenge } from '@/components/psicodoc/MfaChallenge';
 import { friendlyError } from '@/lib/friendlyError';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -48,7 +49,7 @@ const NotFoundOrRedirect = () => {
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, profile, mustChangePassword, updatePassword, refreshProfile, signOut } = useAuth();
+  const { user, loading, profile, mustChangePassword, updatePassword, refreshProfile, signOut, mfaRequired } = useAuth();
   const { toast } = useToast();
 
   if (loading) {
@@ -61,6 +62,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (mfaRequired) {
+    return <MfaChallenge />;
   }
 
   if (!profile) {
