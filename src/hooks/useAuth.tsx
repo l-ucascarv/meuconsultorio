@@ -232,15 +232,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: locked } = await supabase.rpc('login_is_locked', { p_email: email });
+      if (locked) throw new Error(LOCKED_MESSAGE);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      
-      if (error) throw error;
+
+      if (error) {
+        if (/invalid login credentials/i.test(error.message)) {
+          await supabase.rpc('register_failed_login', { p_email: email });
+        }
+        throw new Error(friendlyError(error));
+      }
+      if (data.user) void logSecurityEvent(data.user.id, 'login');
       return { error: null };
     } catch (error) {
-      return { error: error as Error };
+      return { error: new Error(friendlyError(error)) };
+    }
+  };
+
+  const verifyMfa = async (code: string) => {
+    try {
+      const { data: factors, error: fErr } = await supabase.auth.mfa.listFactors();
+      if (fErr) throw fErr;
+      const factor = factors.totp.find((f) => f.status === 'verified');
+      if (!factor) throw new Error('mfa');
+      const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+      if (error) throw error;
+      setMfaRequired(false);
+      return { error: null };
+    } catch (error) {
+      return { error: new Error(friendlyError(error)) };
     }
   };
 
@@ -298,12 +322,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    if (user) await logSecurityEvent(user.id, 'logout');
     sessionStorage.removeItem(LOGIN_AT_KEY);
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setProfile(null);
     setMustChangePassword(false);
+    setMfaRequired(false);
   };
 
   const updatePassword = async (newPassword: string) => {
@@ -312,7 +338,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password: newPassword,
       });
       
-      if (error) throw error;
+      if (error) throw new Error(friendlyError(error));
+      if (user) void logSecurityEvent(user.id, 'password_changed');
 
       // Update must_change_password flag
       if (user) {
