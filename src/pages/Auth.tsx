@@ -1,3 +1,4 @@
+import { friendlyError } from '@/lib/friendlyError';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -353,7 +354,7 @@ const Auth: React.FC = () => {
                 if (result.error) {
                   toast({
                     title: 'Erro ao entrar com Google',
-                    description: result.error.message,
+                    description: friendlyError(result.error),
                     variant: 'destructive',
                   });
                   return;
@@ -367,7 +368,7 @@ const Auth: React.FC = () => {
               } catch (err) {
                 toast({
                   title: 'Erro ao entrar com Google',
-                  description: err instanceof Error ? err.message : String(err),
+                  description: friendlyError(err),
                   variant: 'destructive',
                 });
               }

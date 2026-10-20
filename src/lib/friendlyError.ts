@@ -16,7 +16,7 @@ export const LOCKED_MESSAGE = 'Muitas tentativas de login. Aguarde 15 minutos e 
 
 export function friendlyError(err: unknown, fallback = 'Ocorreu um erro. Tente novamente.'): string {
   const raw = err instanceof Error ? err.message : typeof err === 'string' ? err : (err as { message?: string })?.message ?? '';
-  if (raw === LOCKED_MESSAGE) return raw;
+  if (raw === LOCKED_MESSAGE || raw === fallback || RULES.some(([, m]) => m === raw)) return raw;
   for (const [re, msg] of RULES) if (re.test(raw)) return msg;
   return fallback;
 }

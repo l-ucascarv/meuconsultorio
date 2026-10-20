@@ -1,3 +1,4 @@
+import { friendlyError } from '@/lib/friendlyError';
 import React, { useMemo, useState, useEffect } from 'react';
 import { PsychologistInfo, PrimaryColor, SubscriptionPlan } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
@@ -176,7 +177,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       setIsSlugAvailable(null);
     } catch (error) {
       console.error('Error saving profile:', error);
-      const message = error instanceof Error ? error.message : 'Não foi possível salvar o perfil.';
+      const message = friendlyError(error, 'Não foi possível salvar o perfil.');
       toast({
         title: 'Erro ao salvar perfil',
         description: message,
