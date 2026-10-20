@@ -1,6 +1,13 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { friendlyError, LOCKED_MESSAGE } from '@/lib/friendlyError';
+
+export const logSecurityEvent = async (userId: string, eventType: string, details?: Record<string, unknown>) => {
+  try {
+    await supabase.from('security_events').insert({ user_id: userId, event_type: eventType, details: (details ?? null) as never, user_agent: navigator.userAgent.slice(0, 255) });
+  } catch { /* não bloqueia o fluxo */ }
+};
 
 interface Profile {
   id: string;
@@ -36,6 +43,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
+  mfaRequired: boolean;
+  verifyMfa: (code: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
 
   const sessionExpiryTimeoutRef = useRef<number | null>(null);
   const LOGIN_AT_KEY = 'mc_auth_login_at';
@@ -161,7 +171,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
-          setTimeout(() => {
+          setTimeout(async () => {
+            const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+            setMfaRequired(aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2');
             const meta = session.user.user_metadata;
             fetchProfile(
               session.user.id,
@@ -286,7 +298,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(friendlyError(error));
 
       // Create profile after signup
       if (data.user) {
@@ -374,6 +386,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signOut,
       updatePassword,
       refreshProfile,
+      mfaRequired,
+      verifyMfa,
     }}>
       {children}
     </AuthContext.Provider>
