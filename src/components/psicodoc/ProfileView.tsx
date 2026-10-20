@@ -1,3 +1,5 @@
+import { MfaSettings } from './MfaSettings';
+import { friendlyError } from '@/lib/friendlyError';
 import React, { useMemo, useState, useEffect } from 'react';
 import { PsychologistInfo, PrimaryColor, SubscriptionPlan } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
@@ -176,7 +178,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       setIsSlugAvailable(null);
     } catch (error) {
       console.error('Error saving profile:', error);
-      const message = error instanceof Error ? error.message : 'Não foi possível salvar o perfil.';
+      const message = friendlyError(error, 'Não foi possível salvar o perfil.');
       toast({
         title: 'Erro ao salvar perfil',
         description: message,
@@ -438,12 +440,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
         </div>
 
+        <MfaSettings />
+
         {/* Logout */}
         <div className="mt-6 pt-4 border-t border-border space-y-3">
           <button
             onClick={async () => {
-              const { signOut } = await import('@/hooks/useAuth').then(() => ({ signOut: async () => { await supabase.auth.signOut(); } }));
-              await supabase.auth.signOut();
+              await signOut();
               window.location.href = '/';
             }}
             className="w-full py-3 rounded-xl font-bold text-sm transition-all border-2 border-border text-foreground hover:bg-muted flex items-center justify-center gap-2"

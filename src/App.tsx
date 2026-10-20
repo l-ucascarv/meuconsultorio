@@ -1,3 +1,5 @@
+import { MfaChallenge } from '@/components/psicodoc/MfaChallenge';
+import { friendlyError } from '@/lib/friendlyError';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -47,7 +49,7 @@ const NotFoundOrRedirect = () => {
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, profile, mustChangePassword, updatePassword, refreshProfile, signOut } = useAuth();
+  const { user, loading, profile, mustChangePassword, updatePassword, refreshProfile, signOut, mfaRequired } = useAuth();
   const { toast } = useToast();
 
   if (loading) {
@@ -60,6 +62,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (mfaRequired) {
+    return <MfaChallenge />;
   }
 
   if (!profile) {
@@ -111,7 +117,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
               if (pwError) {
                 toast({
                   title: 'Erro ao salvar senha',
-                  description: pwError.message,
+                  description: friendlyError(pwError),
                   variant: 'destructive',
                 });
                 return;
@@ -130,7 +136,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
             if (error) {
               toast({
                 title: 'Erro ao salvar cadastro',
-                description: error.message,
+                description: friendlyError(error),
                 variant: 'destructive',
               });
               return;
@@ -138,7 +144,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
             await refreshProfile();
           } catch (e) {
-            const message = e instanceof Error ? e.message : String(e);
+            const message = friendlyError(e);
             toast({
               title: 'Erro ao concluir cadastro',
               description: message,

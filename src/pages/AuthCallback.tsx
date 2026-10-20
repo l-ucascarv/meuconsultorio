@@ -1,3 +1,4 @@
+import { friendlyError } from '@/lib/friendlyError';
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +39,7 @@ const AuthCallback = () => {
 
         navigate("/app", { replace: true });
       } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
+        const message = friendlyError(e);
         toast({
           title: "Falha ao autenticar",
           description: message,

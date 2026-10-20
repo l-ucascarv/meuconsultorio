@@ -223,6 +223,13 @@ async function handleCreateBooking(req: Request, supabase: any) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ error: "Data inválida" }, 400);
   if (!/^\d{2}:\d{2}$/.test(time)) return json({ error: "Horário inválido" }, 400);
 
+  // Rate limit: máx. 3 agendamentos por telefone por hora
+  const phoneKey = "phone:" + cleanPhone.replace(/\D/g, "");
+  const { count: recentBookings } = await supabase.from("security_events").select("id", { count: "exact", head: true })
+    .eq("email", phoneKey).eq("event_type", "public_booking").gte("created_at", new Date(Date.now() - 3600_000).toISOString());
+  if ((recentBookings ?? 0) >= 3) return json({ error: "Muitas solicitações. Tente novamente mais tarde." }, 429);
+  await supabase.from("security_events").insert({ email: phoneKey, event_type: "public_booking" });
+
   // Get profile
   const { data: profiles } = await supabase.rpc("get_profile_by_slug", { p_slug: slug });
   if (!profiles?.length) return json({ error: "Profissional não encontrado" }, 404);

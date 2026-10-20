@@ -1,3 +1,4 @@
+import { friendlyError } from '@/lib/friendlyError';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -274,7 +275,7 @@ const AdminPanel: React.FC = () => {
       console.error('Error creating user:', error);
       toast({
         title: 'Erro',
-        description: error.message || 'Não foi possível criar o usuário.',
+        description: friendlyError(error, 'Não foi possível criar o usuário.'),
         variant: 'destructive',
       });
     }
