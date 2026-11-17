@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, subMonths, addMonths, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
+import { parseISO, format, startOfMonth, endOfMonth, subMonths, addMonths, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PrimaryColor } from '../../types/psicodoc';
 import { COLOR_PALETTES } from '../../constants/psicodoc';
@@ -88,7 +88,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
 
   const monthTransactions = useMemo(() => {
     return transactions.filter(t => {
-      const date = new Date(t.transactionDate);
+      const date = parseISO(t.transactionDate);
       return date >= monthStart && date <= monthEnd;
     });
   }, [transactions, monthStart, monthEnd]);
@@ -113,7 +113,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
       const monthE = endOfMonth(month);
       
       const monthTx = transactions.filter(t => {
-        const date = new Date(t.transactionDate);
+        const date = parseISO(t.transactionDate);
         return date >= monthS && date <= monthE;
       });
 
@@ -162,7 +162,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
       const ms = startOfMonth(month);
       const me = endOfMonth(month);
       const monthTx = transactions.filter(t => {
-        const d = new Date(t.transactionDate);
+        const d = parseISO(t.transactionDate);
         return d >= ms && d <= me;
       });
 
@@ -214,6 +214,12 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
   const handleAddTransaction = async () => {
     if (!user || !newTransaction.description || !newTransaction.amount) return;
 
+    const amount = Number(newTransaction.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast({ title: 'Valor inválido', description: 'Informe um valor maior que zero.', variant: 'destructive' });
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('financial_transactions')
@@ -221,7 +227,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
           user_id: user.id,
           type: newTransaction.type,
           description: newTransaction.description,
-          amount: parseFloat(newTransaction.amount),
+          amount,
           category_id: newTransaction.categoryId || null,
           patient_id: newTransaction.patientId || null,
           transaction_date: newTransaction.transactionDate,

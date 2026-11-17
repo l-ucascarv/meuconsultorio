@@ -79,7 +79,7 @@ export const usePatients = (
           name: updates.name,
           responsible_name: updates.responsibleName,
           responsible_phone: updates.responsiblePhone,
-          birth_date: updates.birthDate || null,
+          birth_date: updates.birthDate === undefined ? undefined : updates.birthDate || null,
           notes: updates.notes as any,
         })
         .eq('id', patientId)

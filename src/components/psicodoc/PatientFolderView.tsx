@@ -155,11 +155,16 @@ export const PatientFolderView: React.FC<PatientFolderViewProps> = ({
 
   const downloadFile = (file: ExternalFile) => {
     const link = document.createElement('a');
-    link.href = file.content;
+    const isPlainText = file.type === 'document';
+    const objectUrl = isPlainText
+      ? URL.createObjectURL(new Blob([file.content], { type: 'text/plain;charset=utf-8' }))
+      : null;
+    link.href = objectUrl || file.content;
     link.download = file.name;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    if (objectUrl) window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     toast.success('Download iniciado');
   };
 

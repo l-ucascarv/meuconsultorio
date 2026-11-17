@@ -13,6 +13,12 @@ function json(data: unknown, status = 200) {
   });
 }
 
+function isValidDate(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(value + "T12:00:00Z");
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 function timeToMinutes(t: string): number {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
@@ -126,7 +132,7 @@ async function handleGetSlots(req: Request, supabase: any) {
   }
 
   // Validate date format
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+  if (!isValidDate(dateStr)) {
     return json({ error: "Formato de data inválido" }, 400);
   }
 
@@ -168,6 +174,9 @@ async function handleGetSlots(req: Request, supabase: any) {
   const startMinutes = timeToMinutes(daySetting.start_time);
   const endMinutes = timeToMinutes(daySetting.end_time);
   const step = config.session_duration_minutes + config.break_between_minutes;
+  if (config.session_duration_minutes <= 0 || config.break_between_minutes < 0 || step <= 0) {
+    return json({ error: "Configuração de horários inválida" }, 400);
+  }
 
   for (let m = startMinutes; m + config.session_duration_minutes <= endMinutes; m += step) {
     const slotTime = minutesToTime(m);
@@ -208,7 +217,7 @@ async function handleCreateBooking(req: Request, supabase: any) {
   const body = await req.json();
   const { slug, date, time, patientName, patientAge, patientPhone, serviceTypeId } = body;
 
-  if (!slug || !date || !time || !patientName || !patientAge || !patientPhone) {
+  if (!slug || !date || !time || !patientName || patientAge === undefined || patientAge === null || patientAge === "" || !patientPhone) {
     return json({ error: "Campos obrigatórios: nome, idade, telefone, data e horário" }, 400);
   }
 
@@ -217,11 +226,11 @@ async function handleCreateBooking(req: Request, supabase: any) {
   const cleanPhone = String(patientPhone).trim().substring(0, 20);
 
   if (cleanName.length < 2) return json({ error: "Nome muito curto" }, 400);
-  const ageNum = parseInt(cleanAge, 10);
-  if (isNaN(ageNum) || ageNum < 0 || ageNum > 150) return json({ error: "Idade inválida" }, 400);
-  if (cleanPhone.length < 8) return json({ error: "Telefone inválido" }, 400);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ error: "Data inválida" }, 400);
-  if (!/^\d{2}:\d{2}$/.test(time)) return json({ error: "Horário inválido" }, 400);
+  const ageNum = Number(cleanAge);
+  if (!/^\d+$/.test(cleanAge) || !Number.isInteger(ageNum) || ageNum < 0 || ageNum > 150) return json({ error: "Idade inválida" }, 400);
+  if (cleanPhone.replace(/\D/g, "").length < 8) return json({ error: "Telefone inválido" }, 400);
+  if (!isValidDate(date)) return json({ error: "Data inválida" }, 400);
+  if (typeof time !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return json({ error: "Horário inválido" }, 400);
 
   // Rate limit: máx. 3 agendamentos por telefone por hora
   const phoneKey = "phone:" + cleanPhone.replace(/\D/g, "");
@@ -256,6 +265,7 @@ async function handleCreateBooking(req: Request, supabase: any) {
       .eq("user_id", userId)
       .eq("is_active", true)
       .single();
+    if (!svc) return json({ error: "Serviço indisponível" }, 400);
     if (svc) {
       serviceName = `${svc.name} (R$ ${Number(svc.price).toFixed(2)})`;
     }
@@ -292,7 +302,10 @@ async function handleCreateBooking(req: Request, supabase: any) {
   const slotMinutes = timeToMinutes(time);
   const startMinutes = timeToMinutes(daySetting.start_time);
   const endMinutes = timeToMinutes(daySetting.end_time);
-  if (slotMinutes < startMinutes || slotMinutes + config.session_duration_minutes > endMinutes) {
+  const step = config.session_duration_minutes + config.break_between_minutes;
+  if (config.session_duration_minutes <= 0 || config.break_between_minutes < 0 || step <= 0 ||
+      slotMinutes < startMinutes || slotMinutes + config.session_duration_minutes > endMinutes ||
+      (slotMinutes - startMinutes) % step !== 0) {
     return json({ error: "Horário fora do expediente" }, 400);
   }
 
@@ -330,7 +343,8 @@ async function handleCreateBooking(req: Request, supabase: any) {
     .from("patients")
     .select("id")
     .eq("user_id", userId)
-    .ilike("name", cleanName)
+    .eq("name", cleanName)
+    .eq("responsible_phone", cleanPhone)
     .limit(1);
 
   if (existingPatients && existingPatients.length > 0) {

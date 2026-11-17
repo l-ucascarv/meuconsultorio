@@ -44,6 +44,7 @@ export const useAppointments = (
         time: data.appointment_time,
         patientName: data.patient_name,
         patientId: data.patient_id || undefined,
+        notes: data.notes || undefined,
       };
 
       setAppointments(prev => {
@@ -136,6 +137,7 @@ export const useAppointments = (
             ...a,
             date: updates.date || a.date,
             time: updates.time || a.time,
+            notes: updates.notes !== undefined ? updates.notes : a.notes,
           };
         });
         return updated.sort((a, b) => {
