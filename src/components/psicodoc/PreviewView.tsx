@@ -47,6 +47,11 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
     setShowSaveModal(false);
   };
 
+  const escapeHtml = (value: string | undefined) => (value || '').replace(
+    /[&<>"']/g,
+    (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!
+  );
+
   const handleDownloadHtml = () => {
     if (!documentRef.current) return;
     
@@ -56,7 +61,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${generatedDoc.title || DOC_DEFINITIONS[reportData.type].label}</title>
+  <title>${escapeHtml(generatedDoc.title || DOC_DEFINITIONS[reportData.type].label)}</title>
   <style>
     /* Formatação ABNT (NBR 14724) */
     @page { size: A4; margin: 3cm 2cm 2cm 3cm; }
@@ -100,26 +105,26 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
   </style>
 </head>
 <body>
-  <h1>${generatedDoc.title || DOC_DEFINITIONS[reportData.type].label}</h1>
+  <h1>${escapeHtml(generatedDoc.title || DOC_DEFINITIONS[reportData.type].label)}</h1>
   
   
   <h2>1. Identificação</h2>
-  <div class="content">${generatedDoc.identification}</div>
+  <div class="content">${escapeHtml(generatedDoc.identification)}</div>
   
-  ${generatedDoc.demand ? `<h2>2. Demanda</h2><div class="content">${generatedDoc.demand}</div>` : ''}
-  ${generatedDoc.procedure ? `<h2>3. Procedimento</h2><div class="content">${generatedDoc.procedure}</div>` : ''}
-  ${generatedDoc.analysis ? `<h2>4. Análise</h2><div class="content">${generatedDoc.analysis}</div>` : ''}
+  ${generatedDoc.demand ? `<h2>2. Demanda</h2><div class="content">${escapeHtml(generatedDoc.demand)}</div>` : ''}
+  ${generatedDoc.procedure ? `<h2>3. Procedimento</h2><div class="content">${escapeHtml(generatedDoc.procedure)}</div>` : ''}
+  ${generatedDoc.analysis ? `<h2>4. Análise</h2><div class="content">${escapeHtml(generatedDoc.analysis)}</div>` : ''}
   
   <h2>${generatedDoc.analysis ? '5.' : '2.'} Conclusão</h2>
-  <div class="content">${generatedDoc.conclusion}</div>
-  ${generatedDoc.missingItems && generatedDoc.missingItems.trim() ? `<h2>[Itens ausentes para revisão]</h2><div class="content">${generatedDoc.missingItems}</div>` : ''}
+  <div class="content">${escapeHtml(generatedDoc.conclusion)}</div>
+  ${generatedDoc.missingItems && generatedDoc.missingItems.trim() ? `<h2>[Itens ausentes para revisão]</h2><div class="content">${escapeHtml(generatedDoc.missingItems)}</div>` : ''}
 
   <div class="footer">
-    <p>${reportData.city}, ${new Date(reportData.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+    <p>${escapeHtml(reportData.city)}, ${new Date(reportData.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
     <div class="signature"></div>
-    <p><strong>${psychoInfo.name}</strong></p>
-    <p>${psychoInfo.specialty}</p>
-    <p>CRP: ${psychoInfo.crp}</p>
+    <p><strong>${escapeHtml(psychoInfo.name)}</strong></p>
+    <p>${escapeHtml(psychoInfo.specialty)}</p>
+    <p>CRP: ${escapeHtml(psychoInfo.crp)}</p>
   </div>
 </body>
 </html>`;
@@ -191,7 +196,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
 
   const handleSaveAndClose = () => {
     onSave();
-    toast.success('Documento salvo no histórico!');
+
   };
 
   return (

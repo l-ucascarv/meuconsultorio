@@ -79,22 +79,27 @@ const PublicBooking: React.FC = () => {
 
   useEffect(() => {
     if (!selectedDate) return;
+    const controller = new AbortController();
     const loadSlots = async () => {
       setLoadingSlots(true);
       setSelectedTime(null);
+      setSlots([]);
       try {
         const res = await fetch(
-          `${SUPABASE_URL}/functions/v1/public-booking?slug=${encodeURIComponent(slug!)}&date=${selectedDate}`
+          `${SUPABASE_URL}/functions/v1/public-booking?slug=${encodeURIComponent(slug!)}&date=${selectedDate}`,
+          { signal: controller.signal }
         );
         const data = await res.json();
-        setSlots(data.slots || []);
+        if (!res.ok) throw new Error(data.error || 'Erro ao carregar horários');
+        if (!controller.signal.aborted) setSlots(data.slots || []);
       } catch {
-        setSlots([]);
+        if (!controller.signal.aborted) setSlots([]);
       } finally {
-        setLoadingSlots(false);
+        if (!controller.signal.aborted) setLoadingSlots(false);
       }
     };
     loadSlots();
+    return () => controller.abort();
   }, [selectedDate, slug]);
 
   const calendarDays = useMemo(() => {
@@ -124,7 +129,7 @@ const PublicBooking: React.FC = () => {
   const selectedService = info?.serviceTypes?.find((s) => s.id === form.serviceTypeId);
 
   const handleSubmit = async () => {
-    if (!selectedDate || !selectedTime || !form.name.trim() || !form.age.trim() || !form.phone.trim()) return;
+    if (submitting || loadingSlots || !selectedDate || !selectedTime || !form.name.trim() || !form.age.trim() || !form.phone.trim()) return;
     setSubmitting(true);
     setSubmitError('');
 
@@ -257,7 +262,7 @@ const PublicBooking: React.FC = () => {
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <button
               onClick={() => {
-                const d = new Date(currentMonth);
+                const d = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
                 d.setMonth(d.getMonth() - 1);
                 setCurrentMonth(d);
               }}
@@ -272,7 +277,7 @@ const PublicBooking: React.FC = () => {
             </h3>
             <button
               onClick={() => {
-                const d = new Date(currentMonth);
+                const d = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
                 d.setMonth(d.getMonth() + 1);
                 setCurrentMonth(d);
               }}
@@ -297,7 +302,13 @@ const PublicBooking: React.FC = () => {
               <button
                 key={i}
                 disabled={!day || day.disabled}
-                onClick={() => day && !day.disabled && setSelectedDate(day.date)}
+                onClick={() => {
+                  if (!day || day.disabled || day.date === selectedDate) return;
+                  setSelectedTime(null);
+                  setSlots([]);
+                  setLoadingSlots(true);
+                  setSelectedDate(day.date);
+                }}
                 className={`aspect-square rounded-lg sm:rounded-xl flex items-center justify-center text-xs sm:text-sm font-bold transition-all active:scale-95 ${
                   !day
                     ? 'invisible'

@@ -155,9 +155,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    let active = true;
+    let authVersion = 0;
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        const version = ++authVersion;
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -172,7 +175,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
           setTimeout(async () => {
+            if (!active || version !== authVersion) return;
             const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+            if (!active || version !== authVersion) return;
             setMfaRequired(aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2');
             const meta = session.user.user_metadata;
             fetchProfile(
@@ -180,6 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               session.user.email,
               meta?.full_name || meta?.name || null
             ).then((profileData) => {
+              if (!active || version !== authVersion) return;
               setProfile(profileData);
               setMustChangePassword(profileData?.must_change_password ?? false);
               setLoading(false);
@@ -187,6 +193,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }, 0);
         } else {
           setProfile(null);
+          setMfaRequired(false);
           setMustChangePassword(false);
           setLoading(false);
         }
@@ -194,7 +201,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     // onAuthStateChange já dispara com INITIAL_SESSION, então evitamos duplicar fetch/insert aqui.
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      authVersion++;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Expiração máxima de sessão: 1h (exige login novamente)
